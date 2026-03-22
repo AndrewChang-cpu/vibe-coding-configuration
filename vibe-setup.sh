@@ -35,7 +35,7 @@ cat << 'EOF' > .vibe/mcp-triggers.md
 - Database/SQL: Use postgres MCP to inspect live schema.
 - GitHub/VC: Use github MCP to read issues and draft PRs.
 - UI/Browser: Use puppeteer MCP to inspect localhost rendering.
-- API/Docs: Use context7 MCP for framework documentation.
+- API/Docs: Use context7 MCP for framework documentation; use fetch MCP for arbitrary URLs.
 - Planning: Use sequential-thinking MCP before writing code.
 EOF
 echo "[CREATED] .vibe/mcp-triggers.md"
@@ -167,6 +167,10 @@ cat << 'EOF' > .cursor/mcp.json
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-puppeteer"]
     },
+    "fetch": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-fetch"]
+    },
     "context7": {
       "command": "npx",
       "args": ["-y", "@upstash/context7-mcp"]
@@ -198,12 +202,14 @@ claude mcp remove postgres 2>/dev/null || true
 claude mcp remove github 2>/dev/null || true
 claude mcp remove sequential-thinking 2>/dev/null || true
 claude mcp remove puppeteer 2>/dev/null || true
+claude mcp remove fetch 2>/dev/null || true
 claude mcp remove context7 2>/dev/null || true
 
 claude mcp add --transport stdio postgres -- npx -y @modelcontextprotocol/server-postgres postgresql://localhost:5432/postgres
 claude mcp add --transport stdio github -- npx -y @modelcontextprotocol/server-github
 claude mcp add --transport stdio sequential-thinking -- npx -y @modelcontextprotocol/server-sequential-thinking
 claude mcp add --transport stdio puppeteer -- npx -y @modelcontextprotocol/server-puppeteer
+claude mcp add --transport stdio fetch -- npx -y @modelcontextprotocol/server-fetch
 claude mcp add --scope user --transport stdio context7 -- npx -y @upstash/context7-mcp --api-key $CONTEXT7_API_KEY
 # Note: Ensure GITHUB_PERSONAL_ACCESS_TOKEN and CONTEXT7_API_KEY are set in your .env
 
