@@ -19,14 +19,31 @@ echo "[INFO] Configuring Universal Base directories..."
 source .env
 mkdir -p .vibe/skills
 
-if [ ! -f .vibe/rules.md ]; then
-cat << 'EOF' > .vibe/rules.md
+if [ ! -f .vibe/project-context.md ]; then
+cat << 'EOF' > .vibe/project-context.md
 # Project Context
 - Name: [TODO: Project name]
 - Stack: [TODO: Languages, frameworks, and key libraries]
 - Architecture: [TODO: High-level structure and any notable patterns or constraints]
+
+## Project Architecture & Directory Map
+[TODO: Define the explicit folder structure.]
+
+## Anti-Patterns & "Never Do This"
+[TODO: List specific practices the agent must strictly avoid.]
+
+## Git & Workflow Standards
+[TODO: Define commit message format and PR rules.]
+
+## Definition of Done (DoD)
+[TODO: Define the checklist the agent must complete before finishing a task.]
+
+## Useful Project Commands
+- Run Development Server: [TODO]
+- Build for Production: [TODO]
+- Run Test Suite: [TODO]
 EOF
-echo "[CREATED] .vibe/rules.md"
+echo "[CREATED] .vibe/project-context.md"
 fi
 
 if [ ! -f .vibe/mcp-triggers.md ]; then
@@ -37,6 +54,7 @@ cat << 'EOF' > .vibe/mcp-triggers.md
 - UI/Browser: Use puppeteer MCP to inspect localhost rendering.
 - API/Docs: Use context7 MCP for framework documentation.
 - Planning: Use sequential-thinking MCP before writing code.
+- Search/Research: Use tavily MCP for web search and real-time information.
 EOF
 echo "[CREATED] .vibe/mcp-triggers.md"
 fi
@@ -84,7 +102,7 @@ EOF
 echo "[CREATED] .vibe/todo.md"
 fi
 
-RULES_CONTENT=$(cat .vibe/rules.md)
+PROJECT_CONTEXT=$(cat .vibe/project-context.md)
 MCP_CONTENT=$(cat .vibe/mcp-triggers.md)
 
 # Shared operational rules block used across all agent configs
@@ -170,6 +188,10 @@ cat << 'EOF' > .cursor/mcp.json
     "context7": {
       "command": "npx",
       "args": ["-y", "@upstash/context7-mcp"]
+    },
+    "tavily": {
+      "command": "npx",
+      "args": ["-y", "tavily-mcp"]
     }
   }
 }
@@ -177,7 +199,7 @@ EOF
   echo "[CREATED] .cursor/mcp.json"
 fi
 
-cp .vibe/rules.md .cursor/rules/000-main-rules.mdc
+cp .vibe/project-context.md .cursor/rules/000-main-rules.mdc
 cp .vibe/mcp-triggers.md .cursor/rules/001-mcp-triggers.mdc
 
 cat << EOF > .cursor/rules/002-operational.mdc
@@ -199,13 +221,15 @@ claude mcp remove github 2>/dev/null || true
 claude mcp remove sequential-thinking 2>/dev/null || true
 claude mcp remove puppeteer 2>/dev/null || true
 claude mcp remove context7 2>/dev/null || true
+claude mcp remove tavily 2>/dev/null || true
 
 claude mcp add --transport stdio postgres -- npx -y @modelcontextprotocol/server-postgres postgresql://localhost:5432/postgres
 claude mcp add --transport stdio github -- npx -y @modelcontextprotocol/server-github
 claude mcp add --transport stdio sequential-thinking -- npx -y @modelcontextprotocol/server-sequential-thinking
 claude mcp add --transport stdio puppeteer -- npx -y @modelcontextprotocol/server-puppeteer
 claude mcp add --scope user --transport stdio context7 -- npx -y @upstash/context7-mcp --api-key $CONTEXT7_API_KEY
-# Note: Ensure GITHUB_PERSONAL_ACCESS_TOKEN and CONTEXT7_API_KEY are set in your .env
+claude mcp add --transport stdio tavily -e TAVILY_API_KEY=$TAVILY_API_KEY -- npx -y tavily-mcp
+# Note: Ensure GITHUB_PERSONAL_ACCESS_TOKEN, CONTEXT7_API_KEY, and TAVILY_API_KEY are set in your .env
 
 cat << EOF > CLAUDE.md
 # Global Agent Instructions
@@ -219,7 +243,7 @@ You are an expert software architect. Write clean, secure, and optimized code wh
 
 ---
 
-$RULES_CONTENT
+$PROJECT_CONTEXT
 
 ## Extended Capabilities
 ALWAYS read \`.vibe/mcp-triggers.md\` before executing complex tasks or using external tools.
@@ -230,31 +254,12 @@ $OPS_RULES
 
 ---
 
-## Project Architecture & Directory Map
-[TODO: Define the explicit folder structure.]
-
-## Anti-Patterns & "Never Do This"
-[TODO: List specific practices the agent must strictly avoid.]
-
-## Git & Workflow Standards
-[TODO: Define commit message format and PR rules.]
-
-## Definition of Done (DoD)
-[TODO: Define the checklist the agent must complete before finishing a task.]
-
----
-
 $MCP_CONTENT
 
 ---
 
 ## Lessons & Self-Correction
 Read \`.vibe/lessons.md\` at the start of each session. After ANY user correction, immediately add the pattern to \`.vibe/lessons.md\`.
-
-## Useful Project Commands
-- Run Development Server: npm run dev
-- Build for Production: npm run build
-- Run Test Suite: npm run test
 EOF
 
 # ==============================================================================
@@ -265,7 +270,7 @@ echo "[INFO] Configuring GitHub Copilot & Generic Standards..."
 mkdir -p .github
 
 cat << EOF > .github/copilot-instructions.md
-$RULES_CONTENT
+$PROJECT_CONTEXT
 
 ## Extended Capabilities
 ALWAYS read \`.vibe/mcp-triggers.md\` before executing complex tasks or using external tools.

@@ -25,14 +25,31 @@ if (Test-Path ".env") {
 
 New-Item -ItemType Directory -Force -Path ".vibe/skills" | Out-Null
 
-if (-not (Test-Path ".vibe/rules.md")) {
+if (-not (Test-Path ".vibe/project-context.md")) {
 @'
 # Project Context
 - Name: [TODO: Project name]
 - Stack: [TODO: Languages, frameworks, and key libraries]
 - Architecture: [TODO: High-level structure and any notable patterns or constraints]
-'@ | Out-File -FilePath ".vibe/rules.md" -Encoding utf8
-Write-Host "[CREATED] .vibe/rules.md"
+
+## Project Architecture & Directory Map
+[TODO: Define the explicit folder structure.]
+
+## Anti-Patterns & "Never Do This"
+[TODO: List specific practices the agent must strictly avoid.]
+
+## Git & Workflow Standards
+[TODO: Define commit message format and PR rules.]
+
+## Definition of Done (DoD)
+[TODO: Define the checklist the agent must complete before finishing a task.]
+
+## Useful Project Commands
+- Run Development Server: [TODO]
+- Build for Production: [TODO]
+- Run Test Suite: [TODO]
+'@ | Out-File -FilePath ".vibe/project-context.md" -Encoding utf8
+Write-Host "[CREATED] .vibe/project-context.md"
 }
 
 if (-not (Test-Path ".vibe/mcp-triggers.md")) {
@@ -43,6 +60,7 @@ if (-not (Test-Path ".vibe/mcp-triggers.md")) {
 - UI/Browser: Use puppeteer MCP to inspect localhost rendering.
 - API/Docs: Use context7 MCP for framework documentation.
 - Planning: Use sequential-thinking MCP before writing code.
+- Search/Research: Use tavily MCP for web search and real-time information.
 '@ | Out-File -FilePath ".vibe/mcp-triggers.md" -Encoding utf8
 Write-Host "[CREATED] .vibe/mcp-triggers.md"
 }
@@ -90,8 +108,8 @@ if (-not (Test-Path ".vibe/todo.md")) {
 Write-Host "[CREATED] .vibe/todo.md"
 }
 
-$RULES_CONTENT = Get-Content -Raw -Path ".vibe/rules.md"
-$MCP_CONTENT = Get-Content -Raw -Path ".vibe/mcp-triggers.md"
+$PROJECT_CONTEXT = Get-Content -Raw -Path ".vibe/project-context.md" -Encoding utf8
+$MCP_CONTENT = Get-Content -Raw -Path ".vibe/mcp-triggers.md" -Encoding utf8
 
 # Shared operational rules block used across all agent configs
 $OPS_RULES = @'
@@ -176,6 +194,10 @@ if (-not (Test-Path ".cursor/mcp.json")) {
     "context7": {
       "command": "cmd",
       "args": ["/c", "npx", "-y", "@upstash/context7-mcp"]
+    },
+    "tavily": {
+      "command": "cmd",
+      "args": ["/c", "npx", "-y", "tavily-mcp"]
     }
   }
 }
@@ -183,7 +205,7 @@ if (-not (Test-Path ".cursor/mcp.json")) {
 Write-Host "[CREATED] .cursor/mcp.json"
 }
 
-Copy-Item -Path ".vibe/rules.md" -Destination ".cursor/rules/000-main-rules.mdc" -Force
+Copy-Item -Path ".vibe/project-context.md" -Destination ".cursor/rules/000-main-rules.mdc" -Force
 Copy-Item -Path ".vibe/mcp-triggers.md" -Destination ".cursor/rules/001-mcp-triggers.mdc" -Force
 
 @"
@@ -205,13 +227,15 @@ claude mcp remove github 2>$null
 claude mcp remove sequential-thinking 2>$null
 claude mcp remove puppeteer 2>$null
 claude mcp remove context7 2>$null
+claude mcp remove tavily 2>$null
 
 claude mcp add --transport stdio postgres -- npx.cmd -y @modelcontextprotocol/server-postgres postgresql://localhost:5432/postgres
 claude mcp add --transport stdio github -- npx.cmd -y @modelcontextprotocol/server-github
 claude mcp add --transport stdio sequential-thinking -- npx.cmd -y @modelcontextprotocol/server-sequential-thinking
 claude mcp add --transport stdio puppeteer -- npx.cmd -y @modelcontextprotocol/server-puppeteer
 claude mcp add --scope user --transport stdio context7 -- npx.cmd -y @upstash/context7-mcp --api-key $env:CONTEXT7_API_KEY
-# Note: Ensure GITHUB_PERSONAL_ACCESS_TOKEN and CONTEXT7_API_KEY are set in your .env
+claude mcp add --transport stdio tavily -e TAVILY_API_KEY=$env:TAVILY_API_KEY -- npx.cmd -y tavily-mcp
+# Note: Ensure GITHUB_PERSONAL_ACCESS_TOKEN, CONTEXT7_API_KEY, and TAVILY_API_KEY are set in your .env
 
 @"
 # Global Agent Instructions
@@ -225,39 +249,23 @@ You are an expert software architect. Write clean, secure, and optimized code wh
 
 ---
 
-$RULES_CONTENT
+$PROJECT_CONTEXT
+
 ## Extended Capabilities
 ALWAYS read ``.vibe/mcp-triggers.md`` before executing complex tasks or using external tools.
 
 ---
 
 $OPS_RULES
----
-
-## Project Architecture & Directory Map
-[TODO: Define the explicit folder structure.]
-
-## Anti-Patterns & "Never Do This"
-[TODO: List specific practices the agent must strictly avoid.]
-
-## Git & Workflow Standards
-[TODO: Define commit message format and PR rules.]
-
-## Definition of Done (DoD)
-[TODO: Define the checklist the agent must complete before finishing a task.]
 
 ---
 
 $MCP_CONTENT
+
 ---
 
 ## Lessons & Self-Correction
 Read ``.vibe/lessons.md`` at the start of each session. After ANY user correction, immediately add the pattern to ``.vibe/lessons.md``.
-
-## Useful Project Commands
-- Run Development Server: npm run dev
-- Build for Production: npm run build
-- Run Test Suite: npm run test
 "@ | Out-File -FilePath "CLAUDE.md" -Encoding utf8
 
 # ==============================================================================
@@ -268,7 +276,8 @@ Write-Host "[INFO] Configuring GitHub Copilot & Generic Standards..."
 New-Item -ItemType Directory -Force -Path ".github" | Out-Null
 
 @"
-$RULES_CONTENT
+$PROJECT_CONTEXT
+
 ## Extended Capabilities
 ALWAYS read ``.vibe/mcp-triggers.md`` before executing complex tasks or using external tools.
 

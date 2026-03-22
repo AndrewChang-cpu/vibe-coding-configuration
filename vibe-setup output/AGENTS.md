@@ -14,6 +14,24 @@ You are an expert software architect. Write clean, secure, and optimized code wh
 - Stack: [TODO: Languages, frameworks, and key libraries]
 - Architecture: [TODO: High-level structure and any notable patterns or constraints]
 
+## Project Architecture & Directory Map
+[TODO: Define the explicit folder structure.]
+
+## Anti-Patterns & "Never Do This"
+[TODO: List specific practices the agent must strictly avoid.]
+
+## Git & Workflow Standards
+[TODO: Define commit message format and PR rules.]
+
+## Definition of Done (DoD)
+[TODO: Define the checklist the agent must complete before finishing a task.]
+
+## Useful Project Commands
+- Run Development Server: [TODO]
+- Build for Production: [TODO]
+- Run Test Suite: [TODO]
+
+
 ## Extended Capabilities
 ALWAYS read `.vibe/mcp-triggers.md` before executing complex tasks or using external tools.
 
@@ -68,19 +86,6 @@ ALWAYS read `.vibe/mcp-triggers.md` before executing complex tasks or using exte
 ## Core Principles
 - **Simplicity First**: Make every change as simple as possible. Impact minimal code.
 - **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
----
-
-## Project Architecture & Directory Map
-[TODO: Define the explicit folder structure.]
-
-## Anti-Patterns & "Never Do This"
-[TODO: List specific practices the agent must strictly avoid.]
-
-## Git & Workflow Standards
-[TODO: Define commit message format and PR rules.]
-
-## Definition of Done (DoD)
-[TODO: Define the checklist the agent must complete before finishing a task.]
 
 ---
 
@@ -91,12 +96,8 @@ ALWAYS read `.vibe/mcp-triggers.md` before executing complex tasks or using exte
 - API/Docs: Use context7 MCP for framework documentation; use fetch MCP for arbitrary URLs.
 - Planning: Use sequential-thinking MCP before writing code.
 
+
 ---
 
 ## Lessons & Self-Correction
 Read `.vibe/lessons.md` at the start of each session. After ANY user correction, immediately add the pattern to `.vibe/lessons.md`.
-
-## Useful Project Commands
-- Run Development Server: npm run dev
-- Build for Production: npm run build
-- Run Test Suite: npm run test
