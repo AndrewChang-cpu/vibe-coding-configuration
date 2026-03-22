@@ -41,7 +41,7 @@ if (-not (Test-Path ".vibe/mcp-triggers.md")) {
 - Database/SQL: Use postgres MCP to inspect live schema.
 - GitHub/VC: Use github MCP to read issues and draft PRs.
 - UI/Browser: Use puppeteer MCP to inspect localhost rendering.
-- API/Docs: Use context7 MCP for framework documentation; use fetch MCP for arbitrary URLs.
+- API/Docs: Use context7 MCP for framework documentation.
 - Planning: Use sequential-thinking MCP before writing code.
 '@ | Out-File -FilePath ".vibe/mcp-triggers.md" -Encoding utf8
 Write-Host "[CREATED] .vibe/mcp-triggers.md"
@@ -173,10 +173,6 @@ if (-not (Test-Path ".cursor/mcp.json")) {
       "command": "cmd",
       "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-puppeteer"]
     },
-    "fetch": {
-      "command": "cmd",
-      "args": ["/c", "npx", "-y", "@modelcontextprotocol/server-fetch"]
-    },
     "context7": {
       "command": "cmd",
       "args": ["/c", "npx", "-y", "@upstash/context7-mcp"]
@@ -208,14 +204,12 @@ claude mcp remove postgres 2>$null
 claude mcp remove github 2>$null
 claude mcp remove sequential-thinking 2>$null
 claude mcp remove puppeteer 2>$null
-claude mcp remove fetch 2>$null
 claude mcp remove context7 2>$null
 
 claude mcp add --transport stdio postgres -- npx.cmd -y @modelcontextprotocol/server-postgres postgresql://localhost:5432/postgres
 claude mcp add --transport stdio github -- npx.cmd -y @modelcontextprotocol/server-github
 claude mcp add --transport stdio sequential-thinking -- npx.cmd -y @modelcontextprotocol/server-sequential-thinking
 claude mcp add --transport stdio puppeteer -- npx.cmd -y @modelcontextprotocol/server-puppeteer
-claude mcp add --transport stdio fetch -- npx.cmd -y @modelcontextprotocol/server-fetch
 claude mcp add --scope user --transport stdio context7 -- npx.cmd -y @upstash/context7-mcp --api-key $env:CONTEXT7_API_KEY
 # Note: Ensure GITHUB_PERSONAL_ACCESS_TOKEN and CONTEXT7_API_KEY are set in your .env
 
