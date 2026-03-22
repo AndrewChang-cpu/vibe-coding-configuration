@@ -3,7 +3,7 @@
 # ==============================================================================
 # 0. OS CHECK
 # ==============================================================================
-if (-not $IsWindows) {
+if (-not ($IsWindows -or $env:OS -eq "Windows_NT")) {
     Write-Host "[ERROR] This script is for Windows only. Use vibe-setup.sh on Linux/macOS."
     exit 1
 }
@@ -28,13 +28,9 @@ New-Item -ItemType Directory -Force -Path ".vibe/skills" | Out-Null
 if (-not (Test-Path ".vibe/rules.md")) {
 @'
 # Project Context
-- Name: Interactive Developer Portfolio
-- Stack: Next.js (App Router), TypeScript, React, Tailwind CSS, Three.js
-- Architecture: Component-driven UI. Next.js Server Components by default; Three.js WebGL restricted to Client Components. Data sourced from data/resume.json.
-
-# Agent Constraints
-- Test Coverage: Core UI components must include Jest/Vitest unit tests.
-- Code Style: Functional React components, strict TypeScript typing, absolute imports, Tailwind utility classes.
+- Name: [TODO: Project name]
+- Stack: [TODO: Languages, frameworks, and key libraries]
+- Architecture: [TODO: High-level structure and any notable patterns or constraints]
 '@ | Out-File -FilePath ".vibe/rules.md" -Encoding utf8
 Write-Host "[CREATED] .vibe/rules.md"
 }
@@ -56,9 +52,7 @@ Write-Host "[CREATED] .vibe/mcp-triggers.md"
 # ------------------------------------------------------------------------------
 Write-Host "[INFO] Initializing task tracking..."
 
-New-Item -ItemType Directory -Force -Path "tasks" | Out-Null
-
-if (-not (Test-Path "tasks/lessons.md")) {
+if (-not (Test-Path ".vibe/lessons.md")) {
 @'
 # Lessons Learned
 
@@ -76,11 +70,11 @@ Write rules for yourself that prevent the same mistake. Ruthlessly iterate until
 ## Active Lessons
 
 <!-- Add new lessons above this line. Remove lessons that have been internalized into config files. -->
-'@ | Out-File -FilePath "tasks/lessons.md" -Encoding utf8
-Write-Host "[CREATED] tasks/lessons.md"
+'@ | Out-File -FilePath ".vibe/lessons.md" -Encoding utf8
+Write-Host "[CREATED] .vibe/lessons.md"
 }
 
-if (-not (Test-Path "tasks/todo.md")) {
+if (-not (Test-Path ".vibe/todo.md")) {
 @'
 # Task Tracker
 
@@ -92,8 +86,8 @@ if (-not (Test-Path "tasks/todo.md")) {
 ## Completed
 
 <!-- Move completed task blocks here for reference. -->
-'@ | Out-File -FilePath "tasks/todo.md" -Encoding utf8
-Write-Host "[CREATED] tasks/todo.md"
+'@ | Out-File -FilePath ".vibe/todo.md" -Encoding utf8
+Write-Host "[CREATED] .vibe/todo.md"
 }
 
 $RULES_CONTENT = Get-Content -Raw -Path ".vibe/rules.md"
@@ -116,10 +110,10 @@ $OPS_RULES = @'
 - One task per subagent for focused execution.
 
 ## 3. Self-Improvement Loop
-- After ANY correction from the user: update `tasks/lessons.md` with the pattern.
+- After ANY correction from the user: update `.vibe/lessons.md` with the pattern.
 - Write rules for yourself that prevent the same mistake.
 - Ruthlessly iterate on these lessons until mistake rate drops.
-- Review `tasks/lessons.md` at session start for relevant patterns.
+- Review `.vibe/lessons.md` at session start for relevant patterns.
 
 ## 4. Verification Before Done
 - Never mark a task complete without proving it works.
@@ -140,12 +134,12 @@ $OPS_RULES = @'
 - Go fix failing CI tests without being told how.
 
 ## 7. Task Management
-1. **Plan First**: Write plan to `tasks/todo.md` with checkable items.
+1. **Plan First**: Write plan to `.vibe/todo.md` with checkable items.
 2. **Verify Plan**: Check in before starting implementation.
 3. **Track Progress**: Mark items complete as you go.
 4. **Explain Changes**: High-level summary at each step.
-5. **Document Results**: Add review section to `tasks/todo.md`.
-6. **Capture Lessons**: Update `tasks/lessons.md` after corrections.
+5. **Document Results**: Add review section to `.vibe/todo.md`.
+6. **Capture Lessons**: Update `.vibe/lessons.md` after corrections.
 
 ## Core Principles
 - **Simplicity First**: Make every change as simple as possible. Impact minimal code.
@@ -198,7 +192,7 @@ $OPS_RULES
 ---
 
 ## Lessons & Self-Correction
-Read ``tasks/lessons.md`` at the start of each session. After ANY user correction, immediately add the pattern to ``tasks/lessons.md``.
+Read ``.vibe/lessons.md`` at the start of each session. After ANY user correction, immediately add the pattern to ``.vibe/lessons.md``.
 "@ | Out-File -FilePath ".cursor/rules/002-operational.mdc" -Encoding utf8
 
 # ==============================================================================
@@ -227,6 +221,7 @@ You are an expert software architect. Write clean, secure, and optimized code wh
 1. **Plan Before Coding**: For any task touching >2 files, output an architectural plan first.
 2. **Minimal Diff**: Only modify files explicitly required.
 3. **Run Checks**: Always run linting and testing commands after making logic changes.
+4. **Follow Conventions**: Match the existing code style. Prefer clarity over cleverness.
 
 ---
 
@@ -257,7 +252,7 @@ $MCP_CONTENT
 ---
 
 ## Lessons & Self-Correction
-Read ``tasks/lessons.md`` at the start of each session. After ANY user correction, immediately add the pattern to ``tasks/lessons.md``.
+Read ``.vibe/lessons.md`` at the start of each session. After ANY user correction, immediately add the pattern to ``.vibe/lessons.md``.
 
 ## Useful Project Commands
 - Run Development Server: npm run dev
@@ -286,7 +281,7 @@ $MCP_CONTENT
 ---
 
 ## Lessons & Self-Correction
-Read ``tasks/lessons.md`` at the start of each session. After ANY user correction, immediately add the pattern to ``tasks/lessons.md``.
+Read ``.vibe/lessons.md`` at the start of each session. After ANY user correction, immediately add the pattern to ``.vibe/lessons.md``.
 "@ | Out-File -FilePath ".github/copilot-instructions.md" -Encoding utf8
 
 Copy-Item -Path "CLAUDE.md" -Destination "AGENTS.md" -Force
