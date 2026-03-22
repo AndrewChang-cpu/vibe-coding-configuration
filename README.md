@@ -2,6 +2,15 @@
 
 Bootstraps a consistent AI agent environment in any project. Run once per project to generate config files for Claude Code, Cursor, GitHub Copilot, and the OpenAI Agents spec (`AGENTS.md`).
 
+## Claude Code Plugin (Optional)
+
+Install the skill library directly in any project via Claude Code:
+
+```
+/plugin marketplace add AndrewChang-cpu/vibe-coding-configuration
+/plugin install general-plugin@vibe-coding
+```
+
 ## What it does
 
 - Creates `.vibe/project-context.md` — project-specific context (fill in before running the script)
