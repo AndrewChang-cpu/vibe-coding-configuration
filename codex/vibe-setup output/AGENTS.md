@@ -1,4 +1,15 @@
-﻿# Project Context
+﻿# Global Agent Instructions
+You are an expert software architect. Write clean, secure, and optimized code while strictly adhering to the project context and constraints.
+
+## Primary Directives
+1. **Plan Before Coding**: For any task touching >2 files, output an architectural plan first.
+2. **Minimal Diff**: Only modify files explicitly required.
+3. **Run Checks**: Always run linting and testing commands after making logic changes.
+4. **Follow Conventions**: Match the existing code style. Prefer clarity over cleverness.
+
+---
+
+# Project Context
 - Name: [TODO: Project name]
 - Stack: [TODO: Languages, frameworks, and key libraries]
 - Architecture: [TODO: High-level structure and any notable patterns or constraints]
@@ -75,6 +86,7 @@ ALWAYS read `.vibe/mcp-triggers.md` before executing complex tasks or using exte
 ## Core Principles
 - **Simplicity First**: Make every change as simple as possible. Impact minimal code.
 - **No Laziness**: Find root causes. No temporary fixes. Senior developer standards.
+
 ---
 
 # MCP Tool Triggers
@@ -83,6 +95,7 @@ ALWAYS read `.vibe/mcp-triggers.md` before executing complex tasks or using exte
 - UI/Browser: Use puppeteer MCP to inspect localhost rendering.
 - API/Docs: Use context7 MCP for framework documentation; use fetch MCP for arbitrary URLs.
 - Planning: Use sequential-thinking MCP before writing code.
+
 
 ---
 

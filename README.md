@@ -1,75 +1,63 @@
-# Vibe Coding Configuration
+# vibe-setup
 
-Bootstraps a consistent AI agent environment in any project. Run once per project to generate config files for Claude Code, Cursor, GitHub Copilot, and the OpenAI Agents spec (`AGENTS.md`).
-
-## Claude Code Plugin (Optional)
-
-Install the skill library directly in any project via Claude Code:
-
-```
-/plugin marketplace add AndrewChang-cpu/vibe-coding-configuration
-/plugin install general-plugin@vibe-coding
-```
-
-## What it does
-
-- Creates `.vibe/project-context.md` — project-specific context (fill in before running the script)
-- Creates `.vibe/mcp-triggers.md` — tells agents when to use which MCP tools
-- Creates `.vibe/todo.md` and `.vibe/lessons.md` — task tracking and self-correction log
-- Generates `CLAUDE.md`, `AGENTS.md`, `.github/copilot-instructions.md` — agent instruction files built around your project context
-- Generates `.cursor/mcp.json` and `.cursor/rules/` — Cursor IDE config
-- Registers MCP servers with the Claude CLI
-
-Re-running the script is safe — `.vibe/project-context.md` is never overwritten. All other files are regenerated around it.
-
-## Prerequisites
-
-- Node.js (for `npx` MCP servers)
-- Claude CLI installed and authenticated
-- A `.env` file in the project root with:
-  ```
-  GITHUB_PERSONAL_ACCESS_TOKEN=your_token
-  CONTEXT7_API_KEY=your_key
-  TAVILY_API_KEY=your_key
-  ```
+Bootstrap a consistent AI agent environment in any project. Run once to generate config files for Claude Code, Cursor, and Codex — built around your project context.
 
 ## Usage
 
+```bash
+npx vibe-setup
+```
+
+Prompts you to select which tools to configure. Or use flags:
+
+```bash
+npx vibe-setup --all              # set up everything
+npx vibe-setup --claude           # Claude Code only
+npx vibe-setup --cursor           # Cursor only
+npx vibe-setup --codex            # Codex only
+npx vibe-setup --claude --cursor  # mix and match
+```
+
+## Prerequisites
+
+- Node.js 18+
+- Claude CLI (for `--claude` setup)
+- A `.env` file in your project root with API keys (see below)
+
+## API Keys
+
+Create a `.env` file in your project root:
+
+```
+GITHUB_PERSONAL_ACCESS_TOKEN=your_token
+CONTEXT7_API_KEY=your_key
+TAVILY_API_KEY=your_key
+```
+
+## What gets generated
+
+| Tool | Files |
+|------|-------|
+| Claude | `CLAUDE.md`, `AGENTS.md`, `.vibe/` |
+| Cursor | `.cursor/mcp.json`, `.cursor/rules/`, `.vibe/` |
+| Codex | `AGENTS.md`, `.codex/config.json`, `.vibe/` |
+
+Re-running is safe — `.vibe/project-context.md` is never overwritten. All other files are regenerated.
+
+## Workflow
+
 ### New project
-
-1. Run the setup script to create the folder structure and placeholder files:
-
-   **Linux / macOS**
-   ```bash
-   bash vibe-setup.sh
-   ```
-
-   **Windows** (PowerShell, run from the project root)
-   ```powershell
-   .\vibe-setup-windows.ps1
-   ```
-
-   > If PowerShell blocks execution, run: `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`
-
-2. Paste the **New Project** prompt below into your AI agent as your first message. It will fill in `.vibe/project-context.md`.
-
-3. Re-run the setup script to regenerate all agent config files with your project context baked in.
+1. Run `npx vibe-setup`
+2. Paste the **New Project** prompt (below) into your AI agent — it will fill in `.vibe/project-context.md`
+3. Re-run `npx vibe-setup` to regenerate all config files with your project context baked in
 
 ### Existing project
-
-1. Paste the **Existing Project** prompt below into your AI agent as your first message. It will analyze the codebase and write `.vibe/project-context.md`.
-
-2. Run the setup script. It reads `project-context.md` and generates all agent config files around it.
-
----
+1. Paste the **Existing Project** prompt (below) into your AI agent — it will analyze the codebase and write `.vibe/project-context.md`
+2. Run `npx vibe-setup`
 
 ## Prompts
 
-Copy the relevant prompt and paste it as your **first message** in the project.
-
 ### Existing Project
-
-Use this when running the bootstrapper on a codebase that already exists.
 
 ```
 I need you to analyze this codebase and populate `.vibe/project-context.md`.
@@ -116,8 +104,6 @@ so I can approve or adjust.
 
 ### New Project
 
-Use this when setting up a project that doesn't exist yet or is just getting started.
-
 ```
 I need you to help me define a new project and write `.vibe/project-context.md`.
 This file drives all AI agent config — it will be read on every future session.
@@ -160,3 +146,19 @@ Work through the following steps in order:
 
 Show me the proposed content before writing to disk so I can approve or adjust.
 ```
+
+## Claude Code Plugin
+
+Install the skill library directly in any project via Claude Code:
+
+```
+/plugin marketplace add AndrewChang-cpu/vibe-coding-configuration
+/plugin install general-plugin@vibe-coding
+```
+
+## Subdirectories
+
+- [`claude/`](./claude/) — Claude Code setup details
+- [`cursor/`](./cursor/) — Cursor setup details
+- [`codex/`](./codex/) — Codex setup details
+- [`general-plugin/`](./general-plugin/) — Claude Code skill plugin
