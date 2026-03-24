@@ -38,7 +38,7 @@ TAVILY_API_KEY=your_key
 
 | Tool | Files |
 |------|-------|
-| Claude | `CLAUDE.md`, `AGENTS.md`, `.vibe/` |
+| Claude | `CLAUDE.md`, `.vibe/` |
 | Cursor | `.cursor/mcp.json`, `.cursor/rules/`, `.vibe/` |
 | Codex | `AGENTS.md`, `.codex/config.json`, `.vibe/` |
 

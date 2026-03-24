@@ -12,7 +12,6 @@ function setup(cwd) {
   writeFileIfAbsent(path.join(vibe, 'project-context.md'), readTemplate('project-context.md'));
   writeFileIfAbsent(path.join(vibe, 'mcp-triggers.md'), readTemplate('mcp-triggers.md'));
   writeFileIfAbsent(path.join(vibe, 'lessons.md'), readTemplate('lessons.md'));
-  writeFileIfAbsent(path.join(vibe, 'todo.md'), readTemplate('todo.md'));
 
   const projectContext = fs.readFileSync(path.join(vibe, 'project-context.md'), 'utf8');
   const mcpContent = fs.readFileSync(path.join(vibe, 'mcp-triggers.md'), 'utf8');

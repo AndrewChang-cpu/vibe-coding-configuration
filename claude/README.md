@@ -1,18 +1,28 @@
 # Claude Code Setup
 
+## MCPs
+- **postgres** — inspect live database schema
+- **github** — read issues, draft PRs
+- **sequential-thinking** — structured planning before coding
+- **puppeteer** — browser automation and localhost rendering
+- **context7** — framework and library documentation lookup
+- **tavily** — web search and real-time information
+
+## Plugin
+- **general-plugin** (from this repo) — installs skills: `context-optimization`, `doc-coauthoring`, `test-driven-development`, `systematic-debugging`, `subagent-driven-development`, `filesystem-context`, `executing-plans`, `frontend-design`
+
+---
+
 Sets up Claude Code configuration in your project.
 
 ## What it generates
 
 - `CLAUDE.md` — global agent instructions built around your project context
-- `AGENTS.md` — copy of CLAUDE.md for OpenAI Agents spec compatibility
 - `.vibe/project-context.md` — project-specific context (fill this in first)
 - `.vibe/mcp-triggers.md` — when to use which MCP tools
 - `.vibe/lessons.md` — self-correction log
-- `.vibe/todo.md` — task tracker
 
-Also registers these MCP servers with the Claude CLI:
-- postgres, github, sequential-thinking, puppeteer, context7, tavily
+Also registers the MCP servers above with the Claude CLI and installs the general-plugin.
 
 ## MCP API Keys
 

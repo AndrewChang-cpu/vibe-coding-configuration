@@ -12,7 +12,6 @@ function setup(cwd) {
   writeFileIfAbsent(path.join(vibe, 'project-context.md'), readTemplate('project-context.md'));
   writeFileIfAbsent(path.join(vibe, 'mcp-triggers.md'), readTemplate('mcp-triggers.md'));
   writeFileIfAbsent(path.join(vibe, 'lessons.md'), readTemplate('lessons.md'));
-  writeFileIfAbsent(path.join(vibe, 'todo.md'), readTemplate('todo.md'));
 
   const projectContext = fs.readFileSync(path.join(vibe, 'project-context.md'), 'utf8');
   const mcpContent = fs.readFileSync(path.join(vibe, 'mcp-triggers.md'), 'utf8');
@@ -50,8 +49,6 @@ Read \`.vibe/lessons.md\` at the start of each session. After ANY user correctio
 `;
 
   writeFile(path.join(cwd, 'CLAUDE.md'), claudeMd);
-  fs.copyFileSync(path.join(cwd, 'CLAUDE.md'), path.join(cwd, 'AGENTS.md'));
-  console.log('[CREATED] AGENTS.md');
 
   // --- MCP servers ---
   const isWindows = process.platform === 'win32';
@@ -88,6 +85,10 @@ Read \`.vibe/lessons.md\` at the start of each session. After ANY user correctio
   execSilent(`claude mcp add --transport stdio puppeteer -- ${npx} -y @modelcontextprotocol/server-puppeteer`);
   execSilent(`claude mcp add --scope user --transport stdio context7 -- ${npx} -y @upstash/context7-mcp --api-key ${context7Key}`);
   execSilent(`claude mcp add --transport stdio tavily -e TAVILY_API_KEY=${tavilyKey} -- ${npx} -y tavily-mcp`);
+
+  // --- Plugin ---
+  execSilent(`claude plugin add https://github.com/AndrewChang-cpu/vibe-coding-configuration`);
+  execSilent(`claude plugin install general-plugin@vibe-coding`);
 
   console.log('[SUCCESS] Claude Code configured.');
 }
