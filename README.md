@@ -22,17 +22,33 @@ npx vibe-setup --claude --cursor  # mix and match
 
 - Node.js 18+
 - Claude CLI (for `--claude` setup)
-- A `.env` file in your project root with API keys (see below)
+- API keys set as environment variables (see below)
 
 ## API Keys
 
-Create a `.env` file in your project root:
+Set the following as environment variables on your machine. The setup script reads them at install time; no `.env` file is required.
 
+| Variable | Where to get it |
+|---|---|
+| `GITHUB_PERSONAL_ACCESS_TOKEN` | [github.com/settings/tokens](https://github.com/settings/tokens) |
+| `CONTEXT7_API_KEY` | [context7.com](https://context7.com) |
+| `TAVILY_API_KEY` | [tavily.com](https://tavily.com) |
+
+**macOS/Linux** — add to `~/.zshrc` or `~/.bashrc`:
+```bash
+export GITHUB_PERSONAL_ACCESS_TOKEN=your_token
+export CONTEXT7_API_KEY=your_key
+export TAVILY_API_KEY=your_key
 ```
-GITHUB_PERSONAL_ACCESS_TOKEN=your_token
-CONTEXT7_API_KEY=your_key
-TAVILY_API_KEY=your_key
+
+**Windows** — set as User Environment Variables (search "Edit environment variables" in Start), or via PowerShell:
+```powershell
+[System.Environment]::SetEnvironmentVariable("GITHUB_PERSONAL_ACCESS_TOKEN", "your_token", "User")
+[System.Environment]::SetEnvironmentVariable("CONTEXT7_API_KEY", "your_key", "User")
+[System.Environment]::SetEnvironmentVariable("TAVILY_API_KEY", "your_key", "User")
 ```
+
+A `.env` file in your project root also works as a fallback, but environment variables take precedence.
 
 ## What gets generated
 

@@ -54,17 +54,17 @@ Read \`.vibe/lessons.md\` at the start of each session. After ANY user correctio
   const isWindows = process.platform === 'win32';
   const npx = isWindows ? 'npx.cmd' : 'npx';
 
-  // Read .env for API keys
-  let context7Key = '';
-  let tavilyKey = '';
+  // Read API keys: env vars take precedence, .env file as fallback
+  let context7Key = process.env.CONTEXT7_API_KEY || '';
+  let tavilyKey = process.env.TAVILY_API_KEY || '';
   const envPath = path.join(cwd, '.env');
   if (fs.existsSync(envPath)) {
     const lines = fs.readFileSync(envPath, 'utf8').split('\n');
     for (const line of lines) {
       const [k, v] = line.split('=');
       if (k && v) {
-        if (k.trim() === 'CONTEXT7_API_KEY') context7Key = v.trim();
-        if (k.trim() === 'TAVILY_API_KEY') tavilyKey = v.trim();
+        if (k.trim() === 'CONTEXT7_API_KEY' && !context7Key) context7Key = v.trim();
+        if (k.trim() === 'TAVILY_API_KEY' && !tavilyKey) tavilyKey = v.trim();
       }
     }
   }
