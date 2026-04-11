@@ -57,6 +57,9 @@ Read \`.vibe/lessons.md\` at the start of each session. After ANY user correctio
 `;
   writeFile(path.join(rulesDir, '002-operational.mdc'), ops002);
 
+  // --- Get Shit Done ---
+  execSilent(`npx get-shit-done-cc@latest`);
+
   console.log('[SUCCESS] Cursor configured.');
 }
 

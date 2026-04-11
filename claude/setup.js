@@ -90,6 +90,9 @@ Read \`.vibe/lessons.md\` at the start of each session. After ANY user correctio
   execSilent(`claude plugin add https://github.com/AndrewChang-cpu/vibe-coding-configuration`);
   execSilent(`claude plugin install general-plugin@vibe-coding`);
 
+  // --- Get Shit Done ---
+  execSilent(`npx get-shit-done-cc@latest`);
+
   console.log('[SUCCESS] Claude Code configured.');
 }
 

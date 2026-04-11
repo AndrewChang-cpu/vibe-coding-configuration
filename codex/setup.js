@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { readTemplate, writeFile, writeFileIfAbsent } = require('../shared/utils');
+const { readTemplate, writeFile, writeFileIfAbsent, execSilent } = require('../shared/utils');
 
 function setup(cwd) {
   console.log('[INFO] Configuring Codex...');
@@ -59,6 +59,9 @@ Read \`.vibe/lessons.md\` at the start of each session. After ANY user correctio
     context: ['.vibe/project-context.md', '.vibe/mcp-triggers.md', '.vibe/lessons.md'],
   };
   writeFileIfAbsent(path.join(codexDir, 'config.json'), JSON.stringify(codexConfig, null, 2));
+
+  // --- Get Shit Done ---
+  execSilent(`npx get-shit-done-cc@latest`);
 
   console.log('[SUCCESS] Codex configured.');
 }
