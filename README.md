@@ -1,6 +1,6 @@
 # vibe-setup
 
-Bootstrap a consistent AI agent environment in any project. Run once to generate config files for Claude Code, Cursor, and Codex — built around your project context.
+Bootstrap a consistent AI agent environment in any project. Run once to generate config files for Claude Code, Cursor, and Codex built around your project context. NOTE: I pivoted this to focus primarily on Claude Code setup, so Cursor and Codex support is more basic.
 
 ## Usage
 

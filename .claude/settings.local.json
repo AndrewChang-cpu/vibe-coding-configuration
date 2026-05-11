@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(mkdir -p \"C:/Users/Andrew/Desktop/Coding/Github/vibe-coding-configuration/bin\"\nmkdir -p \"C:/Users/Andrew/Desktop/Coding/Github/vibe-coding-configuration/claude/vibe-setup output/.vibe\"\nmkdir -p \"C:/Users/Andrew/Desktop/Coding/Github/vibe-coding-configuration/cursor/vibe-setup output/.vibe\"\nmkdir -p \"C:/Users/Andrew/Desktop/Coding/Github/vibe-coding-configuration/cursor/vibe-setup output/.cursor/rules\"\nmkdir -p \"C:/Users/Andrew/Desktop/Coding/Github/vibe-coding-configuration/codex/vibe-setup output/.vibe\"\nmkdir -p \"C:/Users/Andrew/Desktop/Coding/Github/vibe-coding-configuration/codex/vibe-setup output/.codex\"\nmkdir -p \"C:/Users/Andrew/Desktop/Coding/Github/vibe-coding-configuration/shared/templates\"\necho \"Directories created\")",
-      "Bash(node --check \"C:/Users/Andrew/Desktop/Coding/Github/vibe-coding-configuration/bin/vibe-setup.js\" && node --check \"C:/Users/Andrew/Desktop/Coding/Github/vibe-coding-configuration/claude/setup.js\" && node --check \"C:/Users/Andrew/Desktop/Coding/Github/vibe-coding-configuration/cursor/setup.js\" && node --check \"C:/Users/Andrew/Desktop/Coding/Github/vibe-coding-configuration/codex/setup.js\" && node --check \"C:/Users/Andrew/Desktop/Coding/Github/vibe-coding-configuration/shared/utils.js\" && echo \"All files pass syntax check\")"
-    ]
-  }
-}
