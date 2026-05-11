@@ -17,11 +17,24 @@ function writeFileIfAbsent(filePath, content) {
   writeFile(filePath, content);
 }
 
-function execSilent(cmd) {
+function exec(cmd) {
   const { execSync } = require('child_process');
   try {
     execSync(cmd, { stdio: 'pipe' });
-  } catch (_) {}
+  } catch (err) {
+    const msg = err.stderr ? err.stderr.toString().trim() : err.message;
+    throw new Error(`Command failed: ${cmd}\n${msg}`);
+  }
 }
 
-module.exports = { readTemplate, writeFile, writeFileIfAbsent, execSilent };
+function execOptional(cmd) {
+  const { execSync } = require('child_process');
+  try {
+    execSync(cmd, { stdio: 'pipe' });
+  } catch (err) {
+    const msg = err.stderr ? err.stderr.toString().trim() : err.message;
+    console.warn(`[WARN] ${cmd}\n       ${msg}`);
+  }
+}
+
+module.exports = { readTemplate, writeFile, writeFileIfAbsent, exec, execOptional };

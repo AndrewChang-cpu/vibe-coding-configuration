@@ -1,5 +1,5 @@
 {
   "model": "codex-1",
   "instructions": "See AGENTS.md for full agent instructions.",
-  "context": [".vibe/project-context.md", ".vibe/mcp-triggers.md", ".vibe/lessons.md"]
+  "context": [".vibe/lessons.md"]
 }

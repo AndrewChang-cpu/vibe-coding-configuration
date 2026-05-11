@@ -1,7 +1,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { readTemplate, writeFile, writeFileIfAbsent, execSilent } = require('../shared/utils');
+const { readTemplate, writeFile, writeFileIfAbsent, exec, execOptional } = require('../shared/utils');
 
 async function setup(cwd, { yes = false } = {}) {
   console.log('[INFO] Configuring Claude Code...');
@@ -58,18 +58,18 @@ async function setup(cwd, { yes = false } = {}) {
     'context7',
     'tavily',
   ];
-  for (const s of mcpServers) execSilent(`claude mcp remove ${s}`);
+  for (const s of mcpServers) execOptional(`claude mcp remove ${s}`);
 
-  execSilent(`claude mcp add --transport stdio postgres -- ${npx} -y @modelcontextprotocol/server-postgres postgresql://localhost:5432/postgres`);
-  execSilent(`claude mcp add --transport stdio github -- ${npx} -y @modelcontextprotocol/server-github`);
-  execSilent(`claude mcp add --transport stdio sequential-thinking -- ${npx} -y @modelcontextprotocol/server-sequential-thinking`);
-  execSilent(`claude mcp add --transport stdio puppeteer -- ${npx} -y @modelcontextprotocol/server-puppeteer`);
-  execSilent(`claude mcp add --scope user --transport stdio context7 -- ${npx} -y @upstash/context7-mcp --api-key ${context7Key}`);
-  execSilent(`claude mcp add --transport stdio tavily -e TAVILY_API_KEY=${tavilyKey} -- ${npx} -y tavily-mcp`);
+  exec(`claude mcp add --transport stdio postgres -- ${npx} -y @modelcontextprotocol/server-postgres postgresql://localhost:5432/postgres`);
+  exec(`claude mcp add --transport stdio github -- ${npx} -y @modelcontextprotocol/server-github`);
+  exec(`claude mcp add --transport stdio sequential-thinking -- ${npx} -y @modelcontextprotocol/server-sequential-thinking`);
+  exec(`claude mcp add --transport stdio puppeteer -- ${npx} -y @modelcontextprotocol/server-puppeteer`);
+  exec(`claude mcp add --scope user --transport stdio context7 -- ${npx} -y @upstash/context7-mcp --api-key ${context7Key}`);
+  exec(`claude mcp add --transport stdio tavily -e TAVILY_API_KEY=${tavilyKey} -- ${npx} -y tavily-mcp`);
 
   // --- Plugin ---
-  execSilent(`claude plugin add https://github.com/AndrewChang-cpu/vibe-coding-configuration`);
-  execSilent(`claude plugin install general-plugin@vibe-coding`);
+  exec(`claude plugin marketplace add https://github.com/AndrewChang-cpu/vibe-coding-configuration`);
+  exec(`claude plugin install general-plugin@vibe-coding`);
 
   // --- Statusline ---
   const statuslineSrc = path.join(__dirname, 'statusline.sh');
@@ -100,9 +100,6 @@ async function setup(cwd, { yes = false } = {}) {
     fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n', 'utf8');
     console.log(`[UPDATED] ${settingsPath} → statusLine`);
   }
-
-  // --- Get Shit Done ---
-  execSilent(`npx get-shit-done-cc@latest`);
 
   console.log('[SUCCESS] Claude Code configured.');
 }
