@@ -17,12 +17,12 @@ Sets up Claude Code configuration in your project.
 
 ## What it generates
 
-- `CLAUDE.md` — global agent instructions built around your project context
-- `.vibe/project-context.md` — project-specific context (fill this in first)
-- `.vibe/mcp-triggers.md` — when to use which MCP tools
-- `.vibe/lessons.md` — self-correction log
+- `~/.claude/CLAUDE.md` — global behavioral instructions (written once, never overwritten on re-runs)
+- `.vibe/lessons.md` — self-correction log (project-specific)
 
 Also registers the MCP servers above with the Claude CLI and installs the general-plugin.
+
+Run `/init` in each project after setup to generate the project-specific `CLAUDE.md`.
 
 ## MCP API Keys
 

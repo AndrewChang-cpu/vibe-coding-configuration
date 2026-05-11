@@ -5,6 +5,14 @@
   "bin": {
     "vibe-setup": "bin/vibe-setup.js"
   },
+  "files": [
+    "bin/",
+    "claude/",
+    "cursor/",
+    "codex/",
+    "shared/",
+    "general-plugin/"
+  ],
   "scripts": {
     "start": "node bin/vibe-setup.js"
   },
