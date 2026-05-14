@@ -60,6 +60,8 @@ async function setup(cwd, { yes = false } = {}) {
   // --- Plugin ---
   exec(`claude plugin marketplace add https://github.com/AndrewChang-cpu/vibe-coding-configuration`);
   exec(`claude plugin install general-plugin@vibe-coding`);
+  exec(`claude plugin update general-plugin@vibe-coding`);
+  exec(`claude plugin update frontend-design@claude-plugins-official`);
 
   // --- Statusline ---
   const statuslineSrc = path.join(__dirname, 'statusline.sh');

@@ -111,10 +111,11 @@ Announce the split to the user before writing. Example: "This project has signif
 ## Stage 7 — MOCKUP GENERATION (when UI exists)
 If the project has a visual UI:
 1. Confirm the complete list of UI states with the user before generating anything. List every state you've identified and ask them to confirm or add/remove.
-2. Generate a high-fidelity HTML mockup for **every** UI state — not just key states.
-3. Save each as a separate `.html` file in `.plan/`: `.plan/mockup-[state-name].html`
-4. Use Tailwind CSS via CDN or inline CSS. Realistic colors, spacing, and typography — should look like the actual product, not a wireframe.
-5. Link all mockups from the relevant plan document.
+2. Before writing any code, commit to a bold, specific aesthetic direction. Consider the product's purpose, audience, and tone — then pick something with a clear point of view. Avoid generic AI aesthetics: no Inter/Roboto/system fonts, no purple-gradient-on-white, no safe neutral layouts. Pick an extreme: brutally minimal, retro-futuristic, editorial, brutalist, art deco, soft/pastel, industrial, etc. State the chosen direction explicitly before generating.
+3. Generate a high-fidelity HTML mockup for **every** UI state — not just key states. Every mockup must reflect the same aesthetic direction.
+4. Save each as a separate `.html` file in `.plan/`: `.plan/mockup-[state-name].html`
+5. Each mockup must have: distinctive typography (pair a display font with a body font — use Google Fonts via CDN), a committed color palette defined as CSS variables, motion/transitions where appropriate, and spatial composition that matches the aesthetic (asymmetry, overlap, generous negative space, or controlled density — not default centered stacks).
+6. Link all mockups from the relevant plan document.
 
 For CLI or inherently text-based projects only: use ASCII diagrams embedded directly in the plan.
 

@@ -65,9 +65,9 @@ For each task in the wave, dispatch one implementer subagent in parallel. Each s
 - Include the test run output in your status report
 
 **Frontend-design directive (inject only if task Files contain `.tsx`, `.jsx`, `.vue`, `.css`, or names containing `component`, `page`, `layout`, `ui`, `view`):**
-- Before writing any code, commit to a bold, specific aesthetic direction (not "clean and modern" — pick something with personality)
-- Avoid generic AI aesthetics: no default shadcn gray, no safe neutral layouts, no Lorem Ipsum placeholders
-- The aesthetic direction must be visible in the final output
+- The aesthetic direction was established in the plan mockups at `.plan/mockup-*.html`. Read the relevant mockup(s) before writing any code and implement them faithfully — do not invent a new aesthetic direction
+- Match the mockup's typography, color palette, spacing, and composition exactly
+- If no mockup exists for this UI state, flag it as `STATUS: NEEDS_CONTEXT` rather than improvising
 
 **Status protocol — end your response with exactly one of:**
 - `STATUS: DONE` — work complete, tests pass, self-review clean
