@@ -21,7 +21,7 @@ If either is missing:
 
 <execution_flow>
 ## Stage 1 — READ
-Read `.plan/PLAN.md` in full and extract the Definition of Done criteria (checkbox list).
+Read all `.plan/*.md` files that exist. Extract the Definition of Done criteria (checkbox list) from PLAN.md. If the plan is split, also read PRD.md, SYSTEM-DESIGN.md, and UI-SPEC.md — their content will be needed when constructing implementer prompts.
 Read `.plan/TASKS.md` in full. Build a mental model of:
 - All tasks (ID, status, depends_on, files, what, done-when)
 - Which tasks are `done`

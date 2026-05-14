@@ -2,6 +2,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const { readTemplate, writeFile, writeFileIfAbsent, exec, execOptional } = require('../shared/utils');
+const { resolveKeys } = require('../shared/keys');
 
 async function setup(cwd, { yes = false } = {}) {
   console.log('[INFO] Configuring Claude Code...');
@@ -31,37 +32,26 @@ async function setup(cwd, { yes = false } = {}) {
 
   writeFileIfAbsent(path.join(vibe, 'lessons.md'), readTemplate('lessons.md'));
 
+  // --- API keys ---
+  const keys = await resolveKeys([
+    { name: 'GITHUB_PERSONAL_ACCESS_TOKEN', hint: 'github.com/settings/tokens' },
+    { name: 'CONTEXT7_API_KEY',             hint: 'context7.com' },
+    { name: 'TAVILY_API_KEY',               hint: 'tavily.com' },
+  ], { yes });
+
+  const githubToken  = keys.GITHUB_PERSONAL_ACCESS_TOKEN || '';
+  const context7Key  = keys.CONTEXT7_API_KEY || '';
+  const tavilyKey    = keys.TAVILY_API_KEY || '';
+
   // --- MCP servers ---
   const isWindows = process.platform === 'win32';
   const npx = isWindows ? 'npx.cmd' : 'npx';
 
-  // Read API keys: env vars take precedence, .env file as fallback
-  let context7Key = process.env.CONTEXT7_API_KEY || '';
-  let tavilyKey = process.env.TAVILY_API_KEY || '';
-  const envPath = path.join(cwd, '.env');
-  if (fs.existsSync(envPath)) {
-    const lines = fs.readFileSync(envPath, 'utf8').split('\n');
-    for (const line of lines) {
-      const [k, v] = line.split('=');
-      if (k && v) {
-        if (k.trim() === 'CONTEXT7_API_KEY' && !context7Key) context7Key = v.trim();
-        if (k.trim() === 'TAVILY_API_KEY' && !tavilyKey) tavilyKey = v.trim();
-      }
-    }
-  }
-
-  const mcpServers = [
-    'postgres',
-    'github',
-    'sequential-thinking',
-    'puppeteer',
-    'context7',
-    'tavily',
-  ];
+  const mcpServers = ['postgres', 'github', 'sequential-thinking', 'puppeteer', 'context7', 'tavily'];
   for (const s of mcpServers) execOptional(`claude mcp remove ${s}`);
 
   exec(`claude mcp add --transport stdio postgres -- ${npx} -y @modelcontextprotocol/server-postgres postgresql://localhost:5432/postgres`);
-  exec(`claude mcp add --transport stdio github -- ${npx} -y @modelcontextprotocol/server-github`);
+  exec(`claude mcp add --transport stdio github -e GITHUB_PERSONAL_ACCESS_TOKEN=${githubToken} -- ${npx} -y @modelcontextprotocol/server-github`);
   exec(`claude mcp add --transport stdio sequential-thinking -- ${npx} -y @modelcontextprotocol/server-sequential-thinking`);
   exec(`claude mcp add --transport stdio puppeteer -- ${npx} -y @modelcontextprotocol/server-puppeteer`);
   exec(`claude mcp add --scope user --transport stdio context7 -- ${npx} -y @upstash/context7-mcp --api-key ${context7Key}`);

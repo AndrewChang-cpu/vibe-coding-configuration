@@ -1,6 +1,6 @@
 ---
 name: vibe:tasks
-description: Decomposes .plan/PLAN.md into a file-level task breakdown with dependency tags and an ASCII WBS graph. Run after /vibe:plan.
+description: Decomposes .plan/ documents into a file-level task breakdown with dependency tags and an ASCII WBS graph. Run after /vibe:plan.
 allowed-tools:
   - Read
   - Write
@@ -20,17 +20,25 @@ If missing: print `No PLAN.md found. Run /vibe:plan first.` and stop.
 
 <execution_flow>
 ## Stage 1 — READ
-Read `.plan/PLAN.md` in full. Extract and hold in working memory:
+Read `.plan/PLAN.md` first. Check whether the plan was split into typed documents by looking for a `Documents:` line in the header or links to sibling files:
+```bash
+ls .plan/*.md 2>/dev/null
+```
+Read every `.md` file present in `.plan/` (PLAN.md, PRD.md, SYSTEM-DESIGN.md, UI-SPEC.md, etc.). Extract and hold in working memory:
 - Project name
-- Functional requirements (FR-xx list)
-- Non-functional requirements
-- Tech stack and deployment target
-- Data model
-- Auth/authorization requirements
-- Brownfield context (patterns to preserve, files that must not change)
-- Definition of done (checkbox list)
-- Out of scope
-- Open questions
+- Functional requirements (FR-xx list) — from PRD.md or PLAN.md
+- Critical user journeys — from PRD.md or PLAN.md
+- Non-functional requirements — from PRD.md or PLAN.md
+- Tech stack and deployment target — from SYSTEM-DESIGN.md or PLAN.md
+- Repository structure — from SYSTEM-DESIGN.md or PLAN.md
+- Data model — from SYSTEM-DESIGN.md or PLAN.md
+- API contracts — from SYSTEM-DESIGN.md or PLAN.md
+- Auth/authorization requirements — from SYSTEM-DESIGN.md or PLAN.md
+- UI states and component structure — from UI-SPEC.md or PLAN.md
+- Brownfield context (patterns to preserve, files that must not change) — from SYSTEM-DESIGN.md or PLAN.md
+- Definition of done (checkbox list) — always in PLAN.md
+- Out of scope — always in PLAN.md
+- Open questions — always in PLAN.md
 
 ## Stage 2 — PROBE (silent, no output)
 Run before decomposing to understand the actual directory structure:
@@ -158,7 +166,7 @@ T-01 · Set up database schema
 ```markdown
 # Tasks: [Project Name]
 > Generated: [YYYY-MM-DD]
-> Source: .plan/PLAN.md
+> Source: .plan/
 > Total: N tasks | Starting points: X
 
 ## Dependency Graph

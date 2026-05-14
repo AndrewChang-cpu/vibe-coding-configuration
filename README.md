@@ -33,7 +33,7 @@ npx vibe-setup@latest --claude
 
 ## API Keys
 
-Set the following as environment variables on your machine. The setup script reads them at install time; no `.env` file is required.
+`vibe-setup` will prompt for any missing keys during setup and offer to save them to `~/.vibe-setup` for future runs.
 
 | Variable | Where to get it |
 |---|---|
@@ -41,21 +41,7 @@ Set the following as environment variables on your machine. The setup script rea
 | `CONTEXT7_API_KEY` | [context7.com](https://context7.com) |
 | `TAVILY_API_KEY` | [tavily.com](https://tavily.com) |
 
-**macOS/Linux** — add to `~/.zshrc` or `~/.bashrc`:
-```bash
-export GITHUB_PERSONAL_ACCESS_TOKEN=your_token
-export CONTEXT7_API_KEY=your_key
-export TAVILY_API_KEY=your_key
-```
-
-**Windows** — set as User Environment Variables (search "Edit environment variables" in Start), or via PowerShell:
-```powershell
-[System.Environment]::SetEnvironmentVariable("GITHUB_PERSONAL_ACCESS_TOKEN", "your_token", "User")
-[System.Environment]::SetEnvironmentVariable("CONTEXT7_API_KEY", "your_key", "User")
-[System.Environment]::SetEnvironmentVariable("TAVILY_API_KEY", "your_key", "User")
-```
-
-A `.env` file in your project root also works as a fallback, but environment variables take precedence.
+Keys are resolved in this order: environment variable → `~/.vibe-setup` → interactive prompt.
 
 ## What gets generated
 
