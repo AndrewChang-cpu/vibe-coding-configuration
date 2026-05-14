@@ -2,13 +2,7 @@
 name: vibe:plan
 description: Interactive planning — grills the user to produce a complete plan before any implementation. Works for greenfield and brownfield projects.
 argument-hint: "[initial project description]"
-allowed-tools:
-  - Read
-  - Write
-  - Bash
-  - Glob
-  - Grep
-  - AskUserQuestion
+allowed-tools: all
 ---
 
 <philosophy>
@@ -49,6 +43,8 @@ ls
 cat package.json 2>/dev/null || cat pyproject.toml 2>/dev/null || cat go.mod 2>/dev/null || cat Cargo.toml 2>/dev/null || true
 ```
 Determine: greenfield or brownfield. Note existing stack if detectable. This informs how you open.
+
+**Investigation principle (applies throughout all stages):** Before asking the user about any factual uncertainty — or parking it as an Open Question — first attempt to resolve it yourself using available tools. You have unrestricted tool access: read files, run bash commands, search the web, spawn agents, inspect the codebase. Only escalate to the user or defer to Open Questions if your investigation comes up empty or ambiguous.
 
 If the probe reveals two or more clearly independent subsystems (separate data stores, separate deployment targets, no shared core logic), flag this before the conversation begins: tell the user you're seeing multiple independent projects and ask whether to plan them together or split into separate /vibe:plan sessions. Splitting produces better plans and prevents scope bleed into the tasks skill.
 
@@ -91,7 +87,7 @@ Before writing anything, run this pass silently:
 - Would any plan section be written as "TBD", a one-liner, or a vague descriptor ("fast", "secure", "good UX")? If yes, keep probing — don't write yet.
 - Are the Definition of Done criteria actually checkable by a human? Vague criteria ("works correctly", "feels responsive") are plan failures.
 - Can I identify any UX edge case, error state, or ambiguous behavior I haven't asked about? If yes, go back to Stage 4.5.
-- Are there Open Questions in my draft that I could have asked the user? If yes, go ask them — do not write an Open Question you could have resolved in conversation.
+- Are there Open Questions in my draft that I could have resolved — by asking the user or by using available tools (Bash, Read, Grep, web search, agents)? If yes, resolve them now. The only valid Open Questions are things genuinely unreachable with any tool: live runtime state on a remote server, a third-party API's behavior in production, a decision the user explicitly said to defer.
 
 Only proceed to Stage 6 once this pass is clean.
 
@@ -166,7 +162,7 @@ FREEFORM RULE: If the user selects "Other" or says anything that signals free ex
 [anything assumed that was not explicitly confirmed by the user]
 
 ## Open Questions
-[ONLY items the user explicitly said "I don't know" / "decide later", OR items requiring external investigation that cannot happen in conversation. Every question you could have asked the user must be asked — not parked here.]
+[ONLY items the user explicitly said "I don't know" / "decide later", OR things genuinely unreachable with any available tool: live runtime state on a remote server, a third-party API's production behavior. Filesystem checks, code inspection, and web searches are NOT valid reasons to defer — do them. Every question you could have asked the user or answered with a tool must be resolved before writing.]
 ```
 
 ### PRD.md (split projects)
