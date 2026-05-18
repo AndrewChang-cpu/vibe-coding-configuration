@@ -85,7 +85,14 @@ After all implementers in the wave report back, handle each status:
 **DONE or DONE_WITH_CONCERNS:** Dispatch a reviewer subagent. The reviewer receives:
 - The task block (verbatim)
 - The implementer's self-report
-- Instructions: review for both spec compliance (built exactly what was asked — no more, no less) and code quality (naming, structure, test coverage) in a single pass. List any issues found with severity (blocking vs. advisory).
+- **Auditor Instructions:** Review for spec compliance (built exactly what was asked) and code quality in a single pass. Act as a "Pre-Commit Auditor" and REJECT the code if it finds any of the following:
+  1. **Modularity Violation:** Any new file exceeds 500 lines (forces splitting into focused modules).
+  2. **Left-over Debugging:** Presence of `console.log`, `print`, `debugger`, or similar debug statements.
+  3. **Security Risks:** Hardcoded secrets, API keys, or obvious logical/auth gaps.
+  4. **Contract Deviation:** Any deviation from the `.plan/api-spec.md` contract (if it exists).
+  5. **Test Coverage:** The implementation code lacks corresponding unit tests or the tests are superficial.
+
+List any issues found with severity (blocking vs. advisory). Advisory issues (nitpicks) should not block the task.
 
 If reviewer finds **blocking issues**: have the implementer fix them (re-dispatch with the reviewer's findings), then re-review. Repeat until clean.
 

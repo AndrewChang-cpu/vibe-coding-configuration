@@ -1,9 +1,9 @@
 {
   "name": "general-plugin",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Core development skills for day-to-day project building with Claude Code.",
   "author": { "name": "AndrewChang-cpu" },
   "repository": "https://github.com/AndrewChang-cpu/vibe-coding-configuration",
   "license": "MIT",
-  "keywords": ["tdd", "debugging", "planning", "subagents", "context", "skills"]
+  "keywords": ["tdd", "debugging", "planning", "subagents", "context", "skills", "auditing", "adr"]
 }

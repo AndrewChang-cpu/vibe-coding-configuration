@@ -61,32 +61,42 @@ Work through <coverage_topics> in conversational order. Skip topics already answ
 - Use plain text for open-ended probing ("walk me through that", "what does that look like exactly")
 - Ask as many questions as needed per round — do not artificially limit batch size
 
-## Stage 4.5 — EDGE CASE SWEEP
-Before moving to the decision gate, run an explicit edge case sweep. Ask yourself:
+## Stage 4.5 — ARCHITECT REVIEW (Agent Delegation)
+Before moving to the decision gate, invoke a subagent using the `Agent` tool to perform a brutal critique of the emerging plan.
 
-*What happens when things go wrong? What states can the system be in that haven't been discussed? What will the user encounter that we haven't designed for?*
+**Subagent Prompt:**
+> Act as a Pedantic Systems Architect. I am planning a project and have gathered the following context:
+> [Insert all gathered requirements, functional/non-functional specs, tech stack, and data model decisions here]
+>
+> Your goal is to identify everything that is still vague, missing, or potentially problematic. **Use the `sequential-thinking` tool to systematically hunt for flaws, contradictions, and missing details.**
+>
+> Specifically, find:
+> 1. **Missing Implementation Details:** What will a developer have to guess about? (e.g., specific library choices, exact data transformation steps, internal API signatures, or complex logic branches).
+> 2. **Edge Cases & Error States:** What happens when things go wrong? (e.g., network failure, malformed input, race conditions, or boundary action failures).
+> 3. **Logical Contradictions:** Are there any requirements that conflict with each other or the chosen tech stack?
+> 4. **Vague Assumptions:** What are we assuming that hasn't been explicitly confirmed?
+>
+> Return a bulleted list of direct, challenging questions directed at the user. Do not provide solutions—only identify the holes.
 
-Enumerate every edge case, error state, UX boundary condition, and ambiguous behavior you can identify. Group related ones and ask about them in batches until the list is empty. This stage always runs — even for API-only or CLI projects. Repeat this sweep until no new edge cases can be identified.
+Present the subagent's questions to the user. Do not proceed to Stage 5 until all identified holes have been addressed or explicitly deferred by the user.
 
-Examples of what to sweep:
+Examples of what to probe (shared with the Architect):
 - Error states: network failure, invalid input, model not loaded, session expired
 - UX edge cases: empty states, loading states, what happens on the boundary action (first/last item, zero results)
 - Behavioral ambiguities: what happens when X and Y happen simultaneously, what does "reset" actually reset
 - Deployment edge cases: what if a dependency is unavailable at startup, cold start behavior
 
-Do not proceed to Stage 5 until you cannot identify any remaining ambiguity.
-
 ## Stage 5 — DECISION GATE
-When all applicable topics have specific answers and the edge case sweep is clean:
+When all applicable topics have specific answers and the Architect Review is clean:
 - AskUserQuestion: "Ready to write the plan?" → ["Write it", "Keep exploring"]
 - If "Keep exploring": ask what feels unresolved or what they want to add
 
 ## Stage 5.5 — SELF-REVIEW (internal, no user interaction)
 Before writing anything, run this pass silently:
 - Can every applicable coverage topic be answered with something specific and verifiable? If not, go back and probe.
-- Would any plan section be written as "TBD", a one-liner, or a vague descriptor ("fast", "secure", "good UX")? If yes, keep probing — don't write yet.
+- Curve any vague descriptor ("fast", "secure", "good UX") into something specific.
 - Are the Definition of Done criteria actually checkable by a human? Vague criteria ("works correctly", "feels responsive") are plan failures.
-- Can I identify any UX edge case, error state, or ambiguous behavior I haven't asked about? If yes, go back to Stage 4.5.
+- Can I identify any implementation detail, UX edge case, or ambiguous behavior that the Architect Review missed? If yes, resolve it now.
 - Are there Open Questions in my draft that I could have resolved — by asking the user or by using available tools (Bash, Read, Grep, web search, agents)? If yes, resolve them now. The only valid Open Questions are things genuinely unreachable with any tool: live runtime state on a remote server, a third-party API's behavior in production, a decision the user explicitly said to defer.
 
 Only proceed to Stage 6 once this pass is clean.
@@ -115,7 +125,20 @@ If the project has a visual UI:
 
 For CLI or inherently text-based projects only: use ASCII diagrams embedded directly in the plan.
 
-## Stage 8 — WRITE
+## Stage 8 — API SPEC GENERATION (when API exists)
+If the project involves a backend or API:
+1. Review the architecture and data model decisions made in SYSTEM-DESIGN.md.
+2. Generate a strict API contract defining every endpoint, request/response schema (using JSON Schema or similar), and possible error codes.
+3. Save the specification as `.plan/api-spec.md` or `.plan/openapi.yaml`.
+4. Ensure all subsequent implementation tasks refer to this specification.
+
+## Stage 9 — ADR GENERATION (Architecture Decision Records)
+Review the planning conversation for major technical pivots or architectural decisions (e.g., database choice, auth mechanism, framework selection).
+1. For each significant decision, extract the Context, Decision, and Rationale.
+2. Automatically generate standardized ADR markdown files in `docs/adr/` (e.g., `docs/adr/0001-choice-of-database.md`).
+3. If the rationale is missing or weak for a decision, use the `Agent` tool to perform a quick audit and ask the user to fill the gap before writing the file.
+
+## Stage 10 — WRITE
 ```bash
 mkdir -p .plan
 ```
