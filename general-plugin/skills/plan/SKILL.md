@@ -1,7 +1,8 @@
 ---
 name: vibe:plan
 description: Interactive planning — grills the user to produce a complete plan before any implementation. Works for greenfield and brownfield projects.
-argument-hint: "[initial project description]"
+arguments: [tests]
+argument-hint: "[initial project description] [--no-tests]"
 allowed-tools: all
 ---
 
@@ -31,7 +32,9 @@ Before writing any plan files, ensure you have addressed all applicable topics b
 - Definition of done: specific verifiable criteria; walk through the demo scenario; what would make the user say "this isn't what I asked for"
 - Out of scope: explicit exclusions that prevent scope creep during implementation
 
-<!-- ADD NEW TOPICS BELOW THIS LINE -->
+- Data lifecycle: retention, deletion, export — or "N/A"
+- Rollback / migration: brownfield rollback path, schema migration strategy — or "N/A"
+- Phased rollout: feature flags, staged deploy, canary — or "N/A"
 </coverage_topics>
 
 <conversation_flow>
@@ -107,9 +110,9 @@ Decide whether to write a single PLAN.md or split into multiple typed documents.
 **Write a single PLAN.md when:** the project is small/simple — one concern domain, no significant UI, or purely backend/CLI with minimal surface area.
 
 **Split into typed documents when:** the project has two or more of: significant UI, significant backend/system design, non-trivial API surface, deployment complexity. The split:
-- `PLAN.md` — index only: overview, definition of done, out of scope, assumptions, open questions
-- `PRD.md` — what to build: functional requirements, CUJs, NFRs, who it's for
-- `SYSTEM-DESIGN.md` — how to build it: architecture, data model, API contracts, repo structure, deployment
+- `PLAN.md` — index: overview, definition of done, artifacts, using this plan in chat, out of scope, assumptions, open questions (plus unchanged behavior for defect fixes)
+- `PRD.md` — what to build: functional requirements, CUJs, acceptance scenarios, traceability, NFRs
+- `SYSTEM-DESIGN.md` — how to build it: architecture, error matrix, testing strategy, sequence diagrams, observability, data model, API contracts, deployment
 - `UI-SPEC.md` — UI design: all states with HTML mockups, UX flows, component structure
 
 Announce the split to the user before writing. Example: "This project has significant frontend and backend scope, so I'm writing three documents: PRD.md, SYSTEM-DESIGN.md, and UI-SPEC.md, with PLAN.md as the index."
@@ -129,7 +132,7 @@ For CLI or inherently text-based projects only: use ASCII diagrams embedded dire
 If the project involves a backend or API:
 1. Review the architecture and data model decisions made in SYSTEM-DESIGN.md.
 2. Generate a strict API contract defining every endpoint, request/response schema (using JSON Schema or similar), and possible error codes.
-3. Save the specification as `.plan/api-spec.md` or `.plan/openapi.yaml`.
+3. Save the specification as `.plan/openapi.yaml` (OpenAPI 3.x).
 4. Ensure all subsequent implementation tasks refer to this specification.
 
 ## Stage 9 — ADR GENERATION (Architecture Decision Records)
@@ -142,6 +145,8 @@ Review the planning conversation for major technical pivots or architectural dec
 ```bash
 mkdir -p .plan
 ```
+If `$tests` equals `--no-tests`: omit the "Test ID" column from all acceptance scenario tables and omit the "Double policy" line from testing strategy. All other sections are written normally.
+
 Write all plan files using the output formats in <plan_output_format>.
 Print: `Plan written to .plan/`
 STOP. Do not suggest next steps. Do not begin implementation.
@@ -178,6 +183,19 @@ FREEFORM RULE: If the user selects "Other" or says anything that signals free ex
 - [ ] [specific, verifiable criterion — names an observable outcome]
 - [ ] ...
 
+## Artifacts
+- API contract: [.plan/openapi.yaml](.plan/openapi.yaml) | none
+- ADRs: [docs/adr/](docs/adr/) | none
+- UI mockups: [.plan/mockup-*.html](.plan/) | none
+
+## Using this plan in chat
+Read all files under `.plan/` before implementing. `TASKS.md` is authoritative for task scope.
+
+## Unchanged behavior
+[Only for defect/brownfield fix plans. Omit this section for greenfield features.
+- WHEN [condition] THE SYSTEM SHALL CONTINUE TO [existing behavior that must not regress]
+- ...]
+
 ## Out of Scope
 - [explicit exclusion]
 
@@ -198,6 +216,21 @@ FREEFORM RULE: If the user selects "Other" or says anything that signals free ex
 
 ## Critical User Journeys
 [step-by-step flows for each CUJ]
+
+## Acceptance scenarios
+Derive test cases systematically using equivalence partitioning (one test per input class: valid, invalid, boundary) and boundary value analysis (min, min+1, max-1, max for any numeric/date range). One scenario per row — never combine unrelated behaviors. Flag any scenario that requires real infrastructure with `[needs-db]`, `[needs-network]`, etc.
+
+| FR | Scenario | Given | When | Then | Test ID |
+|----|----------|-------|------|------|---------|
+| FR-01 | Happy path | ... | ... | ... | `TestFoo_HappyPath` |
+| FR-01 | [edge case name] | ... | ... | ... | `TestFoo_EdgeCase` |
+
+(Omit Test ID column if invoked with `--no-tests`.)
+
+## Traceability
+| FR | CUJ | DoD criterion | Notes |
+|----|-----|---------------|-------|
+| FR-01 | [CUJ name] | [DoD checkbox text] | ... |
 
 ## Non-Functional Requirements
 - NFR-perf: [specific target, or "not specified"]
@@ -226,8 +259,32 @@ FREEFORM RULE: If the user selects "Other" or says anything that signals free ex
 ## Data Model
 [key entities and relationships, or "N/A"]
 
+## Error handling matrix
+| Failure | System behavior | User-visible result | Code/log |
+|---------|-----------------|---------------------|----------|
+| ... | ... | ... | ... |
+
+## Testing strategy
+- Unit: [what gets unit tests; list components that can be tested with injected fakes/stubs]
+- Integration: [what gets integration tests; specify infrastructure — testcontainers, in-memory fakes, sandbox APIs]
+- E2E: [which CUJs get e2e; fixtures/mocks policy]
+- Testability constraints: [any hidden time/randomness/I/O dependencies that require DI seams; note if code needs refactoring before it can be tested]
+- Double policy: prefer Fake (in-memory impl) over Mock for persistence; use Stub for external APIs; use Spy to verify side effects on injected fakes
+
+## Sequence diagrams
+```mermaid
+sequenceDiagram
+  ...
+```
+[One diagram per top CUJ, or "N/A"]
+
+## Observability
+- Logs: [what, where]
+- Metrics: [what, thresholds]
+- Alerts: [what triggers paging, or "none"]
+
 ## API Contracts
-[endpoints, request/response schemas]
+[Summary; full contract in .plan/openapi.yaml — link the file]
 
 ## Auth & Authorization
 [requirements, or "N/A"]
@@ -254,7 +311,7 @@ FREEFORM RULE: If the user selects "Other" or says anything that signals free ex
 ```
 
 ### Single PLAN.md (simple projects)
-Use the full combined format — all sections from PRD, system design, and UI spec merged into one file, in the order above.
+Use the full combined format — all sections from PLAN (including Artifacts, Using this plan in chat, Unchanged behavior when applicable), PRD, system design, and UI spec merged into one file, in the order above.
 </plan_output_format>
 
 <anti_patterns>

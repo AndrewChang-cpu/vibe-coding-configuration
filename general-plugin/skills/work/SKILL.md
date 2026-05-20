@@ -57,12 +57,29 @@ For each task in the wave, dispatch one implementer subagent in parallel. Each s
 - What (full description)
 - Done when (full criteria)
 
-**TDD guidance (inlined):**
-- Write the test(s) first, before any implementation code
-- Run the tests to confirm they fail for the right reason
-- Write the minimum implementation to make them pass
-- Refactor only after tests are green
-- Include the test run output in your status report
+**TDD mandate (non-negotiable):**
+
+STEP 0 — TESTABILITY CHECK: Before writing any tests, check whether the code you are about to write is actually testable. Red flags to fix before proceeding:
+- Hidden time/randomness: `Date.now()`, `Math.random()` inside business logic → inject a Clock/Rng seam
+- Hardcoded external I/O: `new Db()`, `fetch(...)`, filesystem calls embedded in logic → inject an interface via constructor/parameter
+- Busy constructors: side effects or logic in constructors → move to factory methods
+- Shared mutable state: globals or singletons that tests would share → pass state explicitly
+If these appear in code you control, fix the design first. If they are in existing code you cannot change, raise STATUS: BLOCKED explaining the testability constraint. Do not work around untestable design with deep mocking.
+
+STEP 1 — RED: Write the tests listed in the task's "Tests:" field first — one test at a time. If "Tests:" is absent or "N/A", derive tests from the "Done when" criteria. Structure each test as Arrange / Act / Assert. Run them immediately. They MUST fail. Record the exact failure output. If a test passes immediately, it is testing the wrong thing — fix it. Do not write any implementation code until you have seen a failing test.
+
+Test quality rules (violations are grounds for reviewer rejection):
+- One behavior per test — if the name contains "and", split the test
+- Assert outcomes at public seams (return values, observable state, side effects on injected fakes) — not private methods or internal fields
+- Use the weakest double that will do the job: Stub (canned responses) < Fake (in-memory impl) < Spy (observe calls) < Mock (verify interactions). A Fake in-memory DB is always preferred over a Mock for persistence
+- For tests marked [needs-db] or [needs-network], provision real infrastructure (testcontainers, in-memory fake, or sandbox) — do not substitute a mock and claim the test passes
+- Tests must be deterministic: inject Clock/Rng seams rather than sleeping or calling Date.now() directly
+
+STEP 2 — GREEN: Write the minimum implementation to make the tests pass. Run the tests again. Record the exact passing output. Fix the implementation (never the test) until all tests pass.
+
+STEP 3 — VERIFY DONE-WHEN: Execute every command stated in the "Done when" criteria verbatim. Do not read files or reason about whether they would pass. Run the commands. Record the exact output of each.
+
+If any "Done when" command cannot be run (missing DB, missing network service, missing external dependency): do NOT report STATUS: DONE. Report STATUS: BLOCKED with a description of exactly what infrastructure is missing and which "Done when" criterion requires it.
 
 **Frontend-design directive (inject only if task Files contain `.tsx`, `.jsx`, `.vue`, `.css`, or names containing `component`, `page`, `layout`, `ui`, `view`):**
 - The aesthetic direction was established in the plan mockups at `.plan/mockup-*.html`. Read the relevant mockup(s) before writing any code and implement them faithfully — do not invent a new aesthetic direction
@@ -70,10 +87,15 @@ For each task in the wave, dispatch one implementer subagent in parallel. Each s
 - If no mockup exists for this UI state, flag it as `STATUS: NEEDS_CONTEXT` rather than improvising
 
 **Status protocol — end your response with exactly one of:**
-- `STATUS: DONE` — work complete, tests pass, self-review clean
-- `STATUS: DONE_WITH_CONCERNS — [brief description]` — complete but flagging something
+- `STATUS: DONE` — all three steps completed; RED failure output, GREEN pass output, and all "Done when" command outputs are included in this response
+- `STATUS: DONE_WITH_CONCERNS — [brief description]` — steps completed but flagging something; all required outputs still present
 - `STATUS: NEEDS_CONTEXT — [what is missing]` — cannot proceed without more information
-- `STATUS: BLOCKED — [reason]` — cannot complete, needs human intervention
+- `STATUS: BLOCKED — [reason]` — one or more "Done when" commands cannot be executed due to missing infrastructure; specify which command and what is needed
+
+**STATUS: DONE is invalid if this response does not contain:**
+- Actual failing test output from the RED phase (not a description that tests were written)
+- Actual passing test output from the GREEN phase (not a claim that tests pass)
+- Actual output of every "Done when" command (not a claim that criteria are met)
 
 ## Stage 5 — REVIEW AND FIX LOOP
 After all implementers in the wave report back, handle each status:
@@ -83,16 +105,21 @@ After all implementers in the wave report back, handle each status:
 **BLOCKED:** Skip this task for now. Note it as blocked. Continue with the rest of the wave.
 
 **DONE or DONE_WITH_CONCERNS:** Dispatch a reviewer subagent. The reviewer receives:
-- The task block (verbatim)
+- The task block (verbatim), including its full "Done when" criteria and "Tests:" field
 - The implementer's self-report
-- **Auditor Instructions:** Review for spec compliance (built exactly what was asked) and code quality in a single pass. Act as a "Pre-Commit Auditor" and REJECT the code if it finds any of the following:
-  1. **Modularity Violation:** Any new file exceeds 500 lines (forces splitting into focused modules).
-  2. **Left-over Debugging:** Presence of `console.log`, `print`, `debugger`, or similar debug statements.
-  3. **Security Risks:** Hardcoded secrets, API keys, or obvious logical/auth gaps.
-  4. **Contract Deviation:** Any deviation from the `.plan/api-spec.md` contract (if it exists).
-  5. **Test Coverage:** The implementation code lacks corresponding unit tests or the tests are superficial.
+- **Auditor Instructions:** Read `checklist.md` from the `vibe:audit` skill directory. Act as a Pre-Commit Auditor: apply every checklist item, REJECT on blocking findings, list advisory items separately.
 
-List any issues found with severity (blocking vs. advisory). Advisory issues (nitpicks) should not block the task.
+**Reviewer mandatory actions — in this order, before issuing any verdict:**
+
+1. **Auto-reject check:** If the implementer's report does not contain actual test failure output (RED phase), actual test pass output (GREEN phase), and actual output for every "Done when" command — REJECT immediately without reading the code. Issue: "BLOCKING: STATUS: DONE submitted without required verification outputs. Re-run RED phase, GREEN phase, and all Done-when commands and include their exact outputs." Exception: if the task's "Tests:" field is "N/A", RED/GREEN outputs are not required — but Done-when command output still is.
+
+2. **Tests: field check:** If the task has a "Tests:" field (not N/A), verify each named test function exists in the codebase and appears in the GREEN-phase passing output. A missing or renamed test is a blocking rejection.
+
+3. **Re-execute Done-when commands:** Run every command listed in the task's "Done when" criteria yourself. Do not trust the implementer's reported output. Record the actual output of each command you ran.
+
+4. **Report your executions:** State explicitly which commands you ran, the exact output each produced, and whether each "Done when" criterion passed or failed based on your own execution.
+
+5. **Apply checklist:** Apply all items from `checklist.md`. REJECT on any blocking finding. List advisory items separately.
 
 If reviewer finds **blocking issues**: have the implementer fix them (re-dispatch with the reviewer's findings), then re-review. Repeat until clean.
 
@@ -123,4 +150,6 @@ If any DoD criteria fail:
 - Never skip the reviewer pass — even for simple tasks
 - Never advance to the next wave while a reviewer has open blocking issues
 - Never output `<promise>ALL TASKS COMPLETE</promise>` unless every DoD criterion is verified
+- Never let a reviewer approve a task whose STATUS: DONE report omits RED-phase failure output, GREEN-phase pass output, or Done-when command outputs
+- Never let a reviewer approve a task's Done-when criteria without re-executing those commands itself
 </subagent_rules>
