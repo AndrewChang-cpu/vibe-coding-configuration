@@ -18,6 +18,17 @@
       "license": "MIT",
       "category": "development",
       "tags": ["tdd", "debugging", "planning", "subagents", "context", "skills"]
+    },
+    {
+      "name": "obsidian-plugin",
+      "source": "./obsidian-plugin",
+      "description": "Obsidian vault pipeline skills — ingest PDFs and learn from web/GitHub sources.",
+      "version": "1.0.0",
+      "author": { "name": "AndrewChang-cpu" },
+      "repository": "https://github.com/AndrewChang-cpu/vibe-coding-configuration",
+      "license": "MIT",
+      "category": "productivity",
+      "tags": ["obsidian", "vault", "ingest", "learn", "marker", "qmd"]
     }
   ]
 }
