@@ -65,6 +65,29 @@ async function setup(cwd, { yes = false } = {}) {
   exec(`claude plugin update obsidian-plugin@vibe-coding`);
   exec(`claude plugin update frontend-design@claude-plugins-official`);
 
+  // --- Obsidian vault path ---
+  if (process.env.OBSIDIAN_VAULT) {
+    console.log(`[INFO] OBSIDIAN_VAULT already set: ${process.env.OBSIDIAN_VAULT}`);
+  } else {
+    const { default: inquirer } = await import('inquirer');
+    const { vaultPath } = await inquirer.prompt([{
+      type: 'input',
+      name: 'vaultPath',
+      message: 'Absolute path to your Obsidian vault (OBSIDIAN_VAULT, or Enter to skip):',
+    }]);
+    if (vaultPath && vaultPath.trim()) {
+      const vault = vaultPath.trim();
+      const zshrc = path.join(os.homedir(), '.zshrc');
+      const zshrcContent = fs.existsSync(zshrc) ? fs.readFileSync(zshrc, 'utf8') : '';
+      if (!zshrcContent.includes('OBSIDIAN_VAULT')) {
+        fs.appendFileSync(zshrc, `\nexport OBSIDIAN_VAULT="${vault}"\n`, 'utf8');
+        console.log(`[UPDATED] ${zshrc} → OBSIDIAN_VAULT="${vault}"`);
+      } else {
+        console.log(`[INFO] OBSIDIAN_VAULT already present in ${zshrc} — skipping`);
+      }
+    }
+  }
+
   // --- Statusline ---
   const statuslineSrc = path.join(__dirname, 'statusline.sh');
   const statuslineDest = path.join(globalClaudeDir, 'statusline.sh');
