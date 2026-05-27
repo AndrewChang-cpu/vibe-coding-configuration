@@ -11,7 +11,8 @@
     "cursor/",
     "codex/",
     "shared/",
-    "general-plugin/"
+    "general-plugin/",
+    "obsidian-plugin/"
   ],
   "scripts": {
     "start": "node bin/vibe-setup.js"

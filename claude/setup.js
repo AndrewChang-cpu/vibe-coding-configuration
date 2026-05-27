@@ -61,6 +61,8 @@ async function setup(cwd, { yes = false } = {}) {
   exec(`claude plugin marketplace add https://github.com/AndrewChang-cpu/vibe-coding-configuration`);
   exec(`claude plugin install general-plugin@vibe-coding`);
   exec(`claude plugin update general-plugin@vibe-coding`);
+  exec(`claude plugin install obsidian-plugin@vibe-coding`);
+  exec(`claude plugin update obsidian-plugin@vibe-coding`);
   exec(`claude plugin update frontend-design@claude-plugins-official`);
 
   // --- Statusline ---
