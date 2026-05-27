@@ -231,7 +231,7 @@ If this was a **deep-dive run**, append the new note as a bullet under `## Deep 
 ## Step 5: Cross-Package Link Injection
 
 ```bash
-"$OBSIDIAN_VAULT/.venv/bin/python3" "$OBSIDIAN_VAULT/link_related.py" "$OBSIDIAN_VAULT/02_Wiki/Tech/<package-slug>/<topic-slug>.md"
+"$OBSIDIAN_VAULT/.venv/bin/python3" "$OBSIDIAN_VAULT/scripts/link_related.py" "$OBSIDIAN_VAULT/02_Wiki/Tech/<package-slug>/<topic-slug>.md"
 ```
 
 Strips any existing `## Related Notes` section, queries QMD for cross-vault semantically related raw sources, and appends a `## Related Notes` section with up to 5 wikilinks and blockquoted snippets. The file will also be renamed with an `N-` prefix by this script.

@@ -85,7 +85,7 @@ Execute `qmd embed` to update the vector database so new files are immediately s
 After embedding, run the link pipeline on the newly created wiki notes:
 
 ```bash
-"$OBSIDIAN_VAULT/.venv/bin/python3" "$OBSIDIAN_VAULT/link_related.py" "$OBSIDIAN_VAULT/02_Wiki/<note1>.md" "$OBSIDIAN_VAULT/02_Wiki/<note2>.md" ...
+"$OBSIDIAN_VAULT/.venv/bin/python3" "$OBSIDIAN_VAULT/scripts/link_related.py" "$OBSIDIAN_VAULT/02_Wiki/<note1>.md" "$OBSIDIAN_VAULT/02_Wiki/<note2>.md" ...
 ```
 
 Pass only the notes created in this ingestion run (not the entire vault), each as an absolute path. The script will:
