@@ -81,6 +81,12 @@ STEP 3 — VERIFY DONE-WHEN: Execute every command stated in the "Done when" cri
 
 If any "Done when" command cannot be run (missing DB, missing network service, missing external dependency): do NOT report STATUS: DONE. Report STATUS: BLOCKED with a description of exactly what infrastructure is missing and which "Done when" criterion requires it.
 
+**Scope discipline — apply at decision points during implementation:**
+
+*Circle of Concern vs Circle of Control:* Before modifying any file NOT explicitly listed in this task's `Files` field, ask: is this in my Circle of Control (plan scope) or Circle of Concern (things I notice but shouldn't fix right now)? If Circle of Concern: document it as a deviation note, do NOT fix it. "While I'm here" fixes are the #1 cause of scope creep and reviewer rejection.
+
+*Forcing Function:* When you encounter an ambiguous requirement or unclear integration point, resolve the decision NOW rather than deferring to a TODO or runtime check. Use a TypeScript `never` type to force exhaustive switches, a build-time assertion for required config values, or an interface that forces callers to handle error cases. If the decision truly cannot be made at build time, document it as a `checkpoint:decision` deviation — do not silently defer.
+
 **Frontend-design directive (inject only if task Files contain `.tsx`, `.jsx`, `.vue`, `.css`, or names containing `component`, `page`, `layout`, `ui`, `view`):**
 - The aesthetic direction was established in the plan mockups at `.plan/mockup-*.html`. Read the relevant mockup(s) before writing any code and implement them faithfully — do not invent a new aesthetic direction
 - Match the mockup's typography, color palette, spacing, and composition exactly
@@ -107,7 +113,7 @@ After all implementers in the wave report back, handle each status:
 **DONE or DONE_WITH_CONCERNS:** Dispatch a reviewer subagent. The reviewer receives:
 - The task block (verbatim), including its full "Done when" criteria and "Tests:" field
 - The implementer's self-report
-- **Auditor Instructions:** Read `checklist.md` from the `vibe:audit` skill directory. Act as a Pre-Commit Auditor: apply every checklist item, REJECT on blocking findings, list advisory items separately.
+- **Auditor Instructions:** Read `checklist.md` from the `vibe:review` skill directory. Act as a Pre-Commit Auditor: apply every checklist item, REJECT on blocking findings, list advisory items separately.
 
 **Reviewer mandatory actions — in this order, before issuing any verdict:**
 
@@ -120,6 +126,14 @@ After all implementers in the wave report back, handle each status:
 4. **Report your executions:** State explicitly which commands you ran, the exact output each produced, and whether each "Done when" criterion passed or failed based on your own execution.
 
 5. **Apply checklist:** Apply all items from `checklist.md`. REJECT on any blocking finding. List advisory items separately.
+
+6. **4-level implementation verification:** For each file listed in the task's `Files` field, verify:
+   - **(1) Exists** — file is present at the expected path
+   - **(2) Substantive** — content is real implementation, not a placeholder, stub, or TODO-only file (grep for `TODO|FIXME|placeholder|not implemented|return null|pass$`)
+   - **(3) Wired** — connected to the rest of the system: imported where expected, registered in routing/config, called by its consumers
+   - **(4) Functional** — actually works when invoked (re-run the "Done when" commands)
+   
+   Levels 1–3 check programmatically. Level 4 is already covered by re-executing "Done when" commands in step 3. Report any failures as BLOCKING.
 
 If reviewer finds **blocking issues**: have the implementer fix them (re-dispatch with the reviewer's findings), then re-review. Repeat until clean.
 
@@ -137,6 +151,17 @@ If all DoD criteria pass:
 ```
 <promise>ALL TASKS COMPLETE</promise>
 ```
+
+After outputting the completion promise, ask once:
+> "Extract learnings from this session? (y/n)"
+
+If yes: read `.plan/PLAN.md` and `.plan/TASKS.md`. Extract into `.plan/LEARNINGS.md` with 4 sections:
+- **Decisions** — choices made and why (with source task reference)
+- **Lessons** — what would be done differently next time
+- **Patterns** — reusable approaches discovered
+- **Surprises** — unexpected findings, each with source task reference
+
+Only extract what is explicitly documented in the artifacts. Do not fabricate learnings.
 
 If any DoD criteria fail:
 - List the failing criteria

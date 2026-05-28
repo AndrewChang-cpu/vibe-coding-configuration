@@ -1,6 +1,6 @@
 # Pre-commit audit checklist
 
-Use for `/vibe:audit` and work-skill task reviewers. REJECT on any blocking item.
+Use for `/vibe:review` and work-skill task reviewers. REJECT on any blocking item.
 
 ## Blocking
 

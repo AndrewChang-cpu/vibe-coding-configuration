@@ -54,11 +54,27 @@ ls .plan/archive/PLAN*.md 2>/dev/null || true
 ```
 If `.plan/PLAN.md` exists, note its project name and one-line summary for use in Stage 2. Note the highest existing archive version number (e.g. `PLANv2.md` → N=2) so the next archive will be v(N+1). If no archives exist, N=0.
 
+Also check for existing research:
+```bash
+test -f .plan/RESEARCH.md && echo "research: found" || echo "research: absent"
+```
+If `.plan/RESEARCH.md` exists, read it silently. Use its content throughout all planning stages as verified context — it already has provenance tags.
+If absent, note this for Stage 2.
+
 **Investigation principle (applies throughout all stages):** Before asking the user about any factual uncertainty — or parking it as an Open Question — first attempt to resolve it yourself using available tools. You have unrestricted tool access: read files, run bash commands, search the web, spawn agents, inspect the codebase. Only escalate to the user or defer to Open Questions if your investigation comes up empty or ambiguous.
 
 If the probe reveals two or more clearly independent subsystems (separate data stores, separate deployment targets, no shared core logic), flag this before the conversation begins: tell the user you're seeing multiple independent projects and ask whether to plan them together or split into separate /vibe:plan sessions. Splitting produces better plans and prevents scope bleed into the tasks skill.
 
 ## Stage 2 — OPEN
+**Research check (runs first, before existing plan check and before opening the conversation):**
+If `.plan/RESEARCH.md` was NOT found in Stage 1, use AskUserQuestion to ask:
+- Question: "Run researcher agent before planning? Recommended for new features or unfamiliar libraries."
+- Option A: "Yes — run researcher" (description: "Spawns researcher agent to investigate the stack, verify packages, and write .plan/RESEARCH.md. Adds 1-2 minutes.")
+- Option B: "No — skip" (description: "Proceed directly to planning without prior research.")
+
+If "Yes": spawn a `researcher` agent (subagent_type: researcher). Pass it the git probe results and any `$ARGUMENTS` hint as context. After it completes, read `.plan/RESEARCH.md` silently and use its content throughout the planning session.
+If "No" or if RESEARCH.md already existed: proceed.
+
 **Existing plan check (runs before anything else in this stage):**
 If `.plan/PLAN.md` was found in Stage 1, use AskUserQuestion to present it before opening the planning conversation:
 - Question: "I found an existing plan: '[name]' — [one-line summary]. How should I treat it?"
@@ -81,6 +97,13 @@ Pattern: `[What you found] → [Options with tradeoffs] → [Your recommendation
 
 - Wrong: "What port should the Python service use?"
 - Right: "The existing services are on 8080 (go-app) and 8081 (go-data) per docker-compose.yml. I'd put the Python validation service on 8082 to keep the convention — does that work, or do you need a different port?"
+
+**Gray areas — comparison tables:** When you encounter a genuine technical decision with real tradeoffs (not a trivially obvious choice), produce a 5-column table BEFORE making a recommendation:
+
+| Option | Pros | Cons | Complexity | Recommendation |
+|--------|------|------|------------|----------------|
+
+The Recommendation column must always be conditional ("Rec if X", "Rec if you need Y") — never a single unconditional winner. If one option is clearly dominant, it's not a gray area and doesn't need a table.
 
 **Answer processing:** When the user answers, process it with technical depth before moving on. If the answer reveals a misunderstanding or a new constraint, address it directly first — explain what you now understand — then proceed to the next question. Never silently absorb an answer and jump immediately to the next topic.
 

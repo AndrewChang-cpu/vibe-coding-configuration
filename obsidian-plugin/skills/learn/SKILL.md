@@ -99,6 +99,26 @@ Execute the branch matching the source type. All branches end by saving raw cont
 
 Read the combined raw content and create the wiki note at `$OBSIDIAN_VAULT/02_Wiki/Tech/<package-slug>/<topic-slug>.md`.
 
+**AI framework detection (runs before choosing template):**
+
+Detect if this is an AI/LLM framework. Triggers:
+- Explicit names: LangChain, LlamaIndex, LangGraph, CrewAI, AutoGen, Haystack, OpenAI Agents SDK, Anthropic SDK, Google ADK, Vercel AI SDK, DSPy, Instructor, LiteLLM
+- Any package whose README prominently features: LLM / agent / RAG / embedding pipeline / tool use / structured output
+
+If detected: write the standard template sections first, then append four extra sections at the end:
+
+### ## Core Pattern
+Minimal runnable snippet for the primary system type (chain, agent, RAG pipeline, etc.) from the fetched docs. Mark `[ASSUMED]` for any part not present in the fetched content.
+
+### ## Structured Output
+How this framework integrates Pydantic or equivalent. Include the framework-specific method (e.g. `.with_structured_output()`, `instructor`, `PydanticOutputParser`, `response_format`).
+
+### ## Async Notes
+The single most common async mistake for this framework, in 2–3 sentences.
+
+### ## Context Window Strategy
+How the framework handles context exceeding the model's window — one paragraph.
+
 The template differs by note type:
 
 ---

@@ -119,6 +119,20 @@ async function setup(cwd, { yes = false } = {}) {
     console.log(`[UPDATED] ${settingsPath} → statusLine`);
   }
 
+  // --- Agents ---
+  const agentsSrc = path.join(__dirname, '..', 'general-plugin', 'agents');
+  const agentsDest = path.join(globalClaudeDir, 'agents');
+  fs.mkdirSync(agentsDest, { recursive: true });
+  if (fs.existsSync(agentsSrc)) {
+    for (const file of fs.readdirSync(agentsSrc)) {
+      if (file.endsWith('.md')) {
+        const dest = path.join(agentsDest, file);
+        fs.copyFileSync(path.join(agentsSrc, file), dest);
+        console.log(`[CREATED] ${dest}`);
+      }
+    }
+  }
+
   console.log('[SUCCESS] Claude Code configured.');
 }
 

@@ -79,6 +79,25 @@ Install the skill library directly in any project via Claude Code:
 /plugin install general-plugin@vibe-coding
 ```
 
+## Skills Reference
+
+### `/vibe:plan` → `/vibe:tasks` → `/vibe:work` — Primary workflow (TDD)
+
+This is the main development pipeline. `/vibe:plan` produces `.plan/PLAN.md`, `/vibe:tasks` decomposes it into `.plan/TASKS.md`, and `/vibe:work` executes each task with a built-in TDD mandate (RED → GREEN for every task). All test generation happens inline during execution.
+
+### `/vibe:add-tests` — Retrofit tests (separate from the TDD pipeline)
+
+**`/vibe:add-tests` is NOT a substitute for the plan → tasks → work workflow.**
+
+Use it when:
+- Work was done outside the vibe pipeline (manual edits, external contributor, legacy code)
+- You need E2E browser tests written after a feature is already working
+- TDD was explicitly skipped and you want to add coverage after the fact
+
+It will classify changed files, ask for your approval, then generate and run tests. If tests reveal bugs in existing code, it flags them — it does not fix them.
+
+For new features, use `/vibe:work` which handles TDD inline.
+
 ## Subdirectories
 
 - [`claude/`](./claude/) — Claude Code setup details
