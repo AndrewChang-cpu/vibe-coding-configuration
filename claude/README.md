@@ -7,6 +7,7 @@
 - **puppeteer** — browser automation and localhost rendering
 - **context7** — framework and library documentation lookup
 - **tavily** — web search and real-time information
+- **qmd** — query user-global QMD markdown/RAG collections
 
 ## Plugin
 - **general-plugin** (from this repo) — installs skills: `context-optimization`, `doc-coauthoring`, `test-driven-development`, `systematic-debugging`, `subagent-driven-development`, `filesystem-context`, `executing-plans`, `frontend-design`
@@ -20,7 +21,7 @@ Sets up Claude Code configuration in your project.
 - `~/.claude/CLAUDE.md` — global behavioral instructions (written once, never overwritten on re-runs)
 - `.vibe/lessons.md` — self-correction log (project-specific)
 
-Also registers the MCP servers above with the Claude CLI and installs the general-plugin.
+Also registers the MCP servers above with the Claude CLI and installs the general-plugin. The QMD MCP runs `qmd mcp`, so it uses the same user-global QMD collections configured in `~/.config/qmd/index.yml`.
 
 Run `/init` in each project after setup to generate the project-specific `CLAUDE.md`.
 

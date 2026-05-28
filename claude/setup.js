@@ -47,7 +47,7 @@ async function setup(cwd, { yes = false } = {}) {
   const isWindows = process.platform === 'win32';
   const npx = isWindows ? 'npx.cmd' : 'npx';
 
-  const mcpServers = ['postgres', 'github', 'sequential-thinking', 'puppeteer', 'context7', 'tavily'];
+  const mcpServers = ['postgres', 'github', 'sequential-thinking', 'puppeteer', 'context7', 'tavily', 'qmd'];
   for (const s of mcpServers) execOptional(`claude mcp remove ${s}`);
 
   exec(`claude mcp add --transport stdio postgres -- ${npx} -y @modelcontextprotocol/server-postgres postgresql://localhost:5432/postgres`);
@@ -56,6 +56,7 @@ async function setup(cwd, { yes = false } = {}) {
   exec(`claude mcp add --transport stdio puppeteer -- ${npx} -y @modelcontextprotocol/server-puppeteer`);
   exec(`claude mcp add --scope user --transport stdio context7 -- ${npx} -y @upstash/context7-mcp --api-key ${context7Key}`);
   exec(`claude mcp add --transport stdio tavily -e TAVILY_API_KEY=${tavilyKey} -- ${npx} -y tavily-mcp`);
+  exec(`claude mcp add --scope user --transport stdio qmd -- qmd mcp`);
 
   // --- Plugin ---
   exec(`claude plugin marketplace add https://github.com/AndrewChang-cpu/vibe-coding-configuration`);

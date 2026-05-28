@@ -29,6 +29,7 @@ npx vibe-setup@latest --claude
 
 - Node.js 18+
 - Claude CLI (for `--claude` setup)
+- QMD CLI available on PATH (for the Obsidian RAG MCP)
 - API keys set as environment variables (see below)
 
 ## API Keys
@@ -61,6 +62,7 @@ npx vibe-setup --claude
 ```
 - Writes `~/.claude/CLAUDE.md` with personal behavioral instructions
 - Configures MCP servers and installs the skill plugin
+- Registers the QMD MCP server; QMD reads its collections from your user-global `~/.config/qmd/index.yml`
 
 ### Per project
 ```bash
