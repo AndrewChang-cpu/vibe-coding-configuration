@@ -17,10 +17,11 @@ Use for `/vibe:audit` and work-skill task reviewers. REJECT on any blocking item
    - *Infrastructure mocked away*: task required real DB/network but test substituted a mock instead of a fake or testcontainer
 
 7. **Verification execution** — The implementer's STATUS: DONE report does not include: (a) actual failing test output from the RED phase, (b) actual passing test output from the GREEN phase, (c) verbatim output of every "Done when" command. Absence of any of these is a blocking rejection — do not evaluate code quality until the report is complete. The reviewer must re-execute every "Done when" command themselves; approving based solely on the implementer's claimed output violates this checklist.
+8. **Behavioral spec deviation** — The implementation's observable behavior (stored values, algorithm outcome, error response, startup/cleanup sequence) diverges from a criterion explicitly named in `.plan/PLAN.md`'s Definition of Done. Examples: wrong TTL value written to the DB, presence-check used where the plan specifies gap-detection, startup cleanup query missing. Style or structural drift is advisory; value and algorithm deviations from named DoD criteria are blocking.
 
 ## Advisory
 
-8. **Engineering quality** — Naming unclear, non-idiomatic patterns, unnecessary complexity or over-engineering.
-9. **Spec drift** — Behavior diverges from `.plan/PLAN.md`, `PRD.md`, or the task block (when plan files exist).
+9. **Engineering quality** — Naming unclear, non-idiomatic patterns, unnecessary complexity or over-engineering.
+10. **Spec drift** — Behavior diverges from `.plan/PLAN.md`, `PRD.md`, or the task block in ways not covered by item 8 (structural choices, flow ordering, non-DoD implementation details).
 
 Severity: blocking items must be fixed before approval; advisory items may ship with notes.

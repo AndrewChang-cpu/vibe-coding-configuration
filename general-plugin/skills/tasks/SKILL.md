@@ -10,6 +10,14 @@ allowed-tools:
   - AskUserQuestion
 ---
 
+<role>
+This skill has exactly one job: read the plan and write TASKS.md. That is the complete scope.
+
+Your output is a file. Not code. Not implementation. Not a first step toward execution.
+
+After writing TASKS.md, you are done. Do not write any source files. Do not edit any existing code. Do not run any implementation commands. Do not offer to begin, suggest starting, or describe what the next step would look like. A separate skill handles execution — it is not your concern.
+</role>
+
 <input_validation>
 Before doing anything else, check that `.plan/PLAN.md` exists:
 ```bash
@@ -87,7 +95,7 @@ Write `.plan/TASKS.md` using the format in `<tasks_output_format>`.
 
 Print: `Tasks written to .plan/TASKS.md — N tasks, X starting points.`
 
-STOP. Do not suggest implementation. Do not begin execution.
+STOP. Your work is complete. Do not write any source files. Do not implement any task. Do not offer to begin execution or describe what implementation would look like. The session ends here.
 </execution_flow>
 
 <ambiguity_rules>
@@ -201,6 +209,7 @@ If none, write: "None — all ambiguities resolved or inferred."]
 - Vague `Done when`: "works correctly", "is complete", "tests pass" are plan failures
 - Reflexive serialization: do not make T-02 depend on T-01 unless T-02 genuinely needs T-01's output to proceed
 - Decomposing before resolving ambiguities that affect file structure
-- Writing TASKS.md and then suggesting or beginning implementation
+- Implementing any task — writing source files, editing existing code, or running build/test commands — at any point during this skill
+- Writing TASKS.md and then suggesting, offering, or beginning implementation
 - Producing a graph that doesn't match the `depends_on` fields in the task blocks
 </anti_patterns>

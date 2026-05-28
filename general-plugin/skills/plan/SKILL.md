@@ -47,22 +47,48 @@ cat package.json 2>/dev/null || cat pyproject.toml 2>/dev/null || cat go.mod 2>/
 ```
 Determine: greenfield or brownfield. Note existing stack if detectable. This informs how you open.
 
+Also check for an existing plan:
+```bash
+test -f .plan/PLAN.md && head -10 .plan/PLAN.md || true
+ls .plan/archive/PLAN*.md 2>/dev/null || true
+```
+If `.plan/PLAN.md` exists, note its project name and one-line summary for use in Stage 2. Note the highest existing archive version number (e.g. `PLANv2.md` → N=2) so the next archive will be v(N+1). If no archives exist, N=0.
+
 **Investigation principle (applies throughout all stages):** Before asking the user about any factual uncertainty — or parking it as an Open Question — first attempt to resolve it yourself using available tools. You have unrestricted tool access: read files, run bash commands, search the web, spawn agents, inspect the codebase. Only escalate to the user or defer to Open Questions if your investigation comes up empty or ambiguous.
 
 If the probe reveals two or more clearly independent subsystems (separate data stores, separate deployment targets, no shared core logic), flag this before the conversation begins: tell the user you're seeing multiple independent projects and ask whether to plan them together or split into separate /vibe:plan sessions. Splitting produces better plans and prevents scope bleed into the tasks skill.
 
 ## Stage 2 — OPEN
+**Existing plan check (runs before anything else in this stage):**
+If `.plan/PLAN.md` was found in Stage 1, use AskUserQuestion to present it before opening the planning conversation:
+- Question: "I found an existing plan: '[name]' — [one-line summary]. How should I treat it?"
+- Option A: "New phase — archive it" (description: "Archive PLAN.md and TASKS.md; start a fresh plan")
+- Option B: "Extending the existing plan" (description: "Keep the current plan and evolve it in place")
+
+If "New phase — archive it": set `archive_mode = true` and proceed. The archive step runs at Stage 10.
+If "Extending the existing plan": set `archive_mode = false`. Keep the existing plan's decisions in mind throughout the conversation; the new planning session will update the existing files in place.
+If no existing plan was found: proceed directly.
+
 If $ARGUMENTS is non-empty: acknowledge it and ask a focused follow-up based on what's still missing — do not re-ask what was already stated.
 If $ARGUMENTS is empty: ask "What are you building?" as plain text. One question. Wait for their answer before proceeding.
 
 ## Stage 3 — FOLLOW THE THREAD
 Build on exactly what they said. Dig into what they emphasized. Challenge every vague answer before moving on. Do not jump to the next topic until the current one is specific enough to write down.
 
+**Research before asking:** Before posing any question, use available tools to find the answer yourself — read files, inspect configs, grep the codebase, search the web. Then explain what you found and what the options/tradeoffs are *before* asking the user to decide. Don't ask a bare question when you can deliver context with it.
+
+Pattern: `[What you found] → [Options with tradeoffs] → [Your recommendation, if clear] → [Question]`
+
+- Wrong: "What port should the Python service use?"
+- Right: "The existing services are on 8080 (go-app) and 8081 (go-data) per docker-compose.yml. I'd put the Python validation service on 8082 to keep the convention — does that work, or do you need a different port?"
+
+**Answer processing:** When the user answers, process it with technical depth before moving on. If the answer reveals a misunderstanding or a new constraint, address it directly first — explain what you now understand — then proceed to the next question. Never silently absorb an answer and jump immediately to the next topic.
+
 ## Stage 4 — SYSTEMATIC COVERAGE
 Work through <coverage_topics> in conversational order. Skip topics already answered. For each uncovered topic:
 - Use AskUserQuestion for decisions with clear options (yes/no, A vs B vs C)
 - Use plain text for open-ended probing ("walk me through that", "what does that look like exactly")
-- Ask as many questions as needed per round — do not artificially limit batch size
+- Ask questions in logical groups: within a group, provide context for each question (what you found, what the options are). Don't separate tightly related questions across turns — but don't dump 10 unrelated questions in one message. Let each group resolve a coherent sub-area before moving to the next.
 
 ## Stage 4.5 — ARCHITECT REVIEW (Agent Delegation)
 Before moving to the decision gate, invoke a subagent using the `Agent` tool to perform a brutal critique of the emerging plan.
@@ -76,10 +102,11 @@ Before moving to the decision gate, invoke a subagent using the `Agent` tool to 
 > Specifically, find:
 > 1. **Missing Implementation Details:** What will a developer have to guess about? (e.g., specific library choices, exact data transformation steps, internal API signatures, or complex logic branches).
 > 2. **Edge Cases & Error States:** What happens when things go wrong? (e.g., network failure, malformed input, race conditions, or boundary action failures).
-> 3. **Logical Contradictions:** Are there any requirements that conflict with each other or the chosen tech stack?
+> 3. **Logical Contradictions:** Are there any requirements that conflict with each other or the chosen tech stack? (e.g., a Go service performing language-specific parsing — Python AST analysis, Ruby introspection — that would be weaker than doing it in the language's own runtime, and carries hidden infrastructure consequences)
 > 4. **Vague Assumptions:** What are we assuming that hasn't been explicitly confirmed?
+> 5. **Auth per connection type:** For each connection type the system exposes (HTTP REST, WebSocket, SSE, long-poll), explicitly state how credentials are transmitted. Flag any design that passes tokens in URL query parameters or path segments — these appear in server access logs and browser history. The correct pattern for WebSocket auth is a first-message protocol or a short-lived ticket, not a URL token.
 >
-> Return a bulleted list of direct, challenging questions directed at the user. Do not provide solutions—only identify the holes.
+> Return a numbered list of questions. Each item must be 2–4 sentences structured as: (1) the system area and what you observed, (2) what the gap or ambiguity is, (3) the specific question for the user. Do NOT return bare one-liner questions — every question must carry its context so the user understands why you're asking.
 
 Present the subagent's questions to the user. Do not proceed to Stage 5 until all identified holes have been addressed or explicitly deferred by the user.
 
@@ -99,6 +126,7 @@ Before writing anything, run this pass silently:
 - Can every applicable coverage topic be answered with something specific and verifiable? If not, go back and probe.
 - Curve any vague descriptor ("fast", "secure", "good UX") into something specific.
 - Are the Definition of Done criteria actually checkable by a human? Vague criteria ("works correctly", "feels responsive") are plan failures.
+- Can every DoD criterion be traced to a named implementation mechanism — a specific function, startup sequence step, or service call described in the system design? Criteria describing startup behaviors ("on restart, jobs are marked failed"), timeout/cleanup paths ("zombie containers are terminated"), or cross-client coordination ("other tabs receive the updated token") are especially prone to naming outcomes without naming mechanisms. If the mechanism isn't named, add it before writing.
 - Can I identify any implementation detail, UX edge case, or ambiguous behavior that the Architect Review missed? If yes, resolve it now.
 - Are there Open Questions in my draft that I could have resolved — by asking the user or by using available tools (Bash, Read, Grep, web search, agents)? If yes, resolve them now. The only valid Open Questions are things genuinely unreachable with any tool: live runtime state on a remote server, a third-party API's behavior in production, a decision the user explicitly said to defer.
 
@@ -142,6 +170,17 @@ Review the planning conversation for major technical pivots or architectural dec
 3. If the rationale is missing or weak for a decision, use the `Agent` tool to perform a quick audit and ask the user to fill the gap before writing the file.
 
 ## Stage 10 — WRITE
+**Archive existing plan (runs first, only when `archive_mode = true`):**
+```bash
+mkdir -p .plan/archive
+# Determine next version number (N = highest existing archive + 1, minimum 1)
+N=$(ls .plan/archive/PLAN*.md 2>/dev/null | grep -oE 'v[0-9]+' | grep -oE '[0-9]+' | sort -n | tail -1)
+N=$(( ${N:-0} + 1 ))
+mv .plan/PLAN.md .plan/archive/PLANv${N}.md
+test -f .plan/TASKS.md && mv .plan/TASKS.md .plan/archive/TASKSv${N}.md || true
+```
+Add a reference to the archived plan in the new PLAN.md header: `> Archived: [PLANv<N>.md](archive/PLANv<N>.md) (<description of what it covered>)`
+
 ```bash
 mkdir -p .plan
 ```
