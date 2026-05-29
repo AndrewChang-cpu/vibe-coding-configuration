@@ -66,7 +66,7 @@ aliases: [{extract 4-6 key terms, comma-separated}]
 tags: [#type/study_guide, #topic/{infer_from_content}]
 ---
 **Parent MOC:** [[{Relevant_MOC_Name}]]
-**Raw Source:** [[{name_of_marker_output_file}]]
+**Raw Source:** [[{stem}/{stem}]]
 
 ## Executive Summary
 {A concise 2-3 sentence high-level overview of the document.}
@@ -92,9 +92,6 @@ Pass only the notes created in this ingestion run (not the entire vault), each a
 - Strip any existing ## See Also or ## Related Notes sections
 - Query QMD for semantically related raw source chunks from **other courses only**
 - Append a `## Related Notes` section with up to 5 cross-course `[[wikilinks]]` and blockquoted snippets from the matched chunks
-- Rename the file with an `N-` prefix (e.g., `03-test-design.md` → `N-03-test-design.md`)
-
 ## Step 5: Bookkeeping
-After the rename, record the new **N-prefixed** paths:
-1. Append each new wiki file's **N-prefixed** path and a 1-sentence description to `$OBSIDIAN_VAULT/index.md`.
+1. Append each new wiki file's path and a 1-sentence description to `$OBSIDIAN_VAULT/index.md`.
 2. Log the completion of this batch operation with a timestamp in `$OBSIDIAN_VAULT/log.md`.
