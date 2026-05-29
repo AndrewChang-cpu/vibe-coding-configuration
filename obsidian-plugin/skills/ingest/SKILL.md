@@ -92,6 +92,29 @@ Pass only the notes created in this ingestion run (not the entire vault), each a
 - Strip any existing ## See Also or ## Related Notes sections
 - Query QMD for semantically related raw source chunks from **other courses only**
 - Append a `## Related Notes` section with up to 5 cross-course `[[wikilinks]]` and blockquoted snippets from the matched chunks
-## Step 5: Bookkeeping
+## Step 5: MOC Creation / Update
+
+The MOC file lives at `$OBSIDIAN_VAULT/04_Resources/MOC/{Relevant_MOC_Name}.md` (e.g. `17-635 Software Architectures MOC.md`).
+
+- **If the file does not exist**, create it using this template:
+
+```markdown
+---
+tags: [#type/moc, #topic/{infer_from_course}]
+---
+# {Course Name} MOC
+
+## Notes
+- [[{wiki-note-stem}]] — {1-sentence description}
+```
+
+- **If the file already exists**, append each new note as a bullet under `## Notes`:
+```
+- [[{wiki-note-stem}]] — {1-sentence description}
+```
+
+Use the wiki note's stem (filename without `.md`) as the wikilink — not the full path.
+
+## Step 6: Bookkeeping
 1. Append each new wiki file's path and a 1-sentence description to `$OBSIDIAN_VAULT/index.md`.
 2. Log the completion of this batch operation with a timestamp in `$OBSIDIAN_VAULT/log.md`.

@@ -48,7 +48,7 @@ Keys are resolved in this order: environment variable → `~/.vibe-setup` → in
 
 | Tool | Files |
 |------|-------|
-| Claude | `~/.claude/CLAUDE.md` (global), `.vibe/lessons.md` |
+| Claude | `~/.claude/CLAUDE.md` (global), `~/.claude/agents/` (global), `.vibe/lessons.md` (per project) |
 | Cursor | `.cursor/mcp.json`, `.cursor/rules/`, `.vibe/` |
 | Codex | `AGENTS.md`, `.codex/config.json`, `.vibe/` |
 
@@ -60,8 +60,9 @@ Re-running is safe — you'll be prompted before `~/.claude/CLAUDE.md` is overwr
 ```bash
 npx vibe-setup --claude
 ```
-- Writes `~/.claude/CLAUDE.md` with personal behavioral instructions
+- Writes `~/.claude/CLAUDE.md` with behavioral and security instructions
 - Configures MCP servers and installs the skill plugin
+- Deploys agents to `~/.claude/agents/`
 - Registers the QMD MCP server; QMD reads its collections from your user-global `~/.config/qmd/index.yml`
 
 ### Per project
@@ -79,24 +80,100 @@ Install the skill library directly in any project via Claude Code:
 /plugin install general-plugin@vibe-coding
 ```
 
-## Skills Reference
+---
 
-### `/vibe:plan` → `/vibe:tasks` → `/vibe:work` — Primary workflow (TDD)
+## Workflows
 
-This is the main development pipeline. `/vibe:plan` produces `.plan/PLAN.md`, `/vibe:tasks` decomposes it into `.plan/TASKS.md`, and `/vibe:work` executes each task with a built-in TDD mandate (RED → GREEN for every task). All test generation happens inline during execution.
+### Primary pipeline
 
-### `/vibe:add-tests` — Retrofit tests (separate from the TDD pipeline)
+Run these commands in sequence for any non-trivial feature or bugfix:
 
-**`/vibe:add-tests` is NOT a substitute for the plan → tasks → work workflow.**
+| Step | Command | What it does | Auto-fires |
+|------|---------|--------------|------------|
+| 1. Plan | `/vibe:plan` | Interviews you, writes `.plan/PLAN.md` with tasks, Definition of Done, and optional UI mockups | — |
+| 2. Tasks | `/vibe:tasks` | Decomposes `PLAN.md` into `.plan/TASKS.md` — TDD-ready task blocks with files, Done-when criteria, and test names | — |
+| 3. Work | `/vibe:work` | Dispatches implementer + reviewer subagents per task. TDD-mandated (RED → GREEN). Repeats waves until all tasks done | **python-patterns** (if `.py` in task files), **doc-updater** (after all tasks complete) |
+| 4. Review | `/vibe:review` | Adversarial code review: runs code-reviewer, then pre-commit checklist | **python-reviewer** (if `.py` in diff), **security-reviewer** (always) |
+| 5. Verify | `/vibe:verify` | Conversational UAT — walks through each DoD criterion with you, records pass/fail | — |
+| 6. Ship | `/vibe:ship` | Commit and push | — |
 
-Use it when:
-- Work was done outside the vibe pipeline (manual edits, external contributor, legacy code)
-- You need E2E browser tests written after a feature is already working
-- TDD was explicitly skipped and you want to add coverage after the fact
+**The pipeline is designed to be repeated.** When you run `/vibe:plan` again on a project that already has a `PLAN.md`, it asks whether you're starting a new phase or extending the existing plan. Choosing "New phase" archives `PLAN.md` and `TASKS.md` to `.plan/archive/` (versioned as `PLANv1.md`, `PLANv2.md`, etc.) before writing a fresh plan. Run the full cycle as many times as needed — once per feature, once per iteration, or whenever scope changes significantly.
 
-It will classify changed files, ask for your approval, then generate and run tests. If tests reveal bugs in existing code, it flags them — it does not fix them.
+**Autonomous variants of step 3:**
+- `/vibe:work-loop` — loops until all tasks complete without manual re-invocation
+- `/vibe:work-ralph` — fully autonomous via ralph-wiggum loop; runs until `<promise>ALL TASKS COMPLETE</promise>`
 
-For new features, use `/vibe:work` which handles TDD inline.
+---
+
+### Automatic behaviors
+
+These fire as part of the workflow above. **No commands to remember — they are wired in.**
+
+| Behavior | Fires when | What it does |
+|----------|------------|--------------|
+| **python-patterns** | `/vibe:work` with `.py` files in task | Injects Python idioms, type hint conventions, and project standards into the implementer subagent before it writes code. Update `python-patterns/SKILL.md` to encode your codebase's standards. |
+| **python-testing** | `/vibe:tdd` or `/vibe:add-tests` on a Python project | Injects pytest fixture conventions, marker setup, coverage config, and codebase testing patterns into the test-writing phase. |
+| **python-reviewer** | `/vibe:review` with any `.py` file in the diff | Runs `ruff`, `mypy`, `black --check`, `bandit` automatically. Outputs CRITICAL/HIGH/MEDIUM findings. Blocks on CRITICAL or HIGH. |
+| **security-reviewer** | Every `/vibe:review` | OWASP Top 10 scan, secrets detection, injection/auth/XSS/deserialization analysis. Blocks on CRITICAL or HIGH. |
+| **doc-updater** | `/vibe:work` after all tasks complete | Checks whether READMEs, docstrings, or docs need updating to match completed changes. Writes updates if needed. |
+| **extract-patterns** | Session end (Stop hook) | Asks Claude to suggest project-specific, non-obvious, repeatable patterns for `.vibe/lessons.md`. Fires once per session. |
+| **tdd-reminder** | Write to a new `.py` file (PostToolUse hook) | Outputs a one-line reminder to write the test first (RED phase) when a new non-test Python module is created. |
+
+---
+
+### Utility skills (user invoked)
+
+These are invoked directly by the user when needed, **outside the primary pipeline**.
+
+| Command | When to use |
+|---------|-------------|
+| `/vibe:debug` | Bug found — investigates cause using the scientific method, proposes a targeted fix |
+| `/vibe:add-tests` | Retrofit tests onto work done outside the pipeline (manual edits, legacy code, external contributor) |
+| `/test-driven-development` | Standalone TDD guidance when not running the full pipeline |
+| `/context-optimization` | Long sessions — KV-cache, observation masking, compaction, partitioning techniques |
+| `/filesystem-context` | Inject relevant filesystem context into the session |
+| `/doc-coauthoring` | Collaborative documentation writing |
+| `/frontend-design` | UI and component design guidance |
+| `/python-patterns` | Consult Python project standards directly **(also auto-used by vibe:work)** |
+| `/python-testing` | Consult Python testing conventions directly **(also auto-used by vibe:tdd and add-tests)** |
+
+**Obsidian integration** (obsidian-plugin, install separately):
+
+| Command | When to use |
+|---------|-------------|
+| `/vibe:ingest` | Import and index content from your Obsidian vault |
+| `/vibe:learn` | Surface relevant notes from your Obsidian vault for the current task |
+
+---
+
+### Agents
+
+Agents are spawned as subagents by skills (automatic) or invoked directly using `subagent_type: <name>` in a prompt.
+
+| Agent | Spawned automatically by | Invoke directly when |
+|-------|--------------------------|----------------------|
+| `code-reviewer` | `/vibe:review` (always) | You want a standalone adversarial code review |
+| `python-reviewer` | `/vibe:review` when `.py` in diff | You want Python-only static analysis outside a review pass |
+| `security-reviewer` | `/vibe:review` (always) | You want a focused security scan outside a review pass |
+| `doc-updater` | `/vibe:work` after all tasks complete | After ad-hoc code changes outside the pipeline that may affect docs |
+| `build-error-resolver` | Manual only | Build or type-check fails; you want minimal-diff fixes with no architectural edits |
+| `debugger` | `/vibe:debug` | Bug investigation via scientific method |
+| `researcher` | `/vibe:plan` (research phase) | Deep technical research before planning a complex feature |
+
+---
+
+### Living Python specs
+
+Two skill files are designed to be **updated over time** as you learn your codebases:
+
+| File | What to put in it |
+|------|------------------|
+| `general-plugin/skills/python-patterns/SKILL.md` | Project-specific Python idioms, architectural conventions, type hint patterns, error handling standards. python-reviewer uses this as its enforcement source of truth. |
+| `general-plugin/skills/python-testing/SKILL.md` | Codebase-specific pytest conventions: which fixtures are shared, how to set up the DB in tests, naming patterns, coverage targets, which markers are in use. |
+
+The **extract-patterns hook** helps keep these current: at the end of every session it prompts for patterns worth adding to `.vibe/lessons.md`. Promote confirmed patterns from there into these skill files.
+
+---
 
 ## Subdirectories
 

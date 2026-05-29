@@ -1,0 +1,5 @@
+{
+  "name": "extract-patterns",
+  "version": "1.0.0",
+  "description": "Background hooks: suggest patterns for .vibe/lessons.md at session end; remind to write tests when new Python files are created."
+}

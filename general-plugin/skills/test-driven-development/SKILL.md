@@ -15,6 +15,8 @@ Write the test first. Watch it fail. Write minimal code to pass.
 
 ## When to Use
 
+**Python projects:** Before writing tests, read the `python-testing` skill for this project's pytest fixture conventions, marker setup, coverage configuration, and codebase-specific testing patterns.
+
 **Always:**
 - New features
 - Bug fixes

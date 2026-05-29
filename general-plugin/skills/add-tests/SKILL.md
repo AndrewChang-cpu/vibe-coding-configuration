@@ -71,6 +71,8 @@ If ambiguous, ask the user which location to use.
 
 ## Stage 5 — GENERATE TESTS
 
+**Python projects:** Before generating tests, read the `python-testing` skill for pytest fixture conventions, marker usage, conftest structure, and coverage expectations specific to this codebase.
+
 **For TDD files:**
 1. Write test file following RED-GREEN conventions:
    - RED: Write the test first. Structure: Arrange / Act / Assert. Run it — it MUST fail. If it passes immediately, it's testing the wrong thing.

@@ -1,6 +1,6 @@
 ---
 name: vibe:learn
-description: Web-to-Vault pipeline. Fetches one or more URLs, GitHub repo URLs, or local repo paths (and crawls relevant sub-links/docs), synthesizes a Tech Reference note into 02_Wiki/Tech/<package>/, and runs the full bookkeeping pipeline. First call creates overview.md; subsequent calls on the same package create focused deep-dive notes.
+description: Web-to-Vault pipeline. Fetches one or more URLs, GitHub repo URLs, or local repo paths (and crawls relevant sub-links/docs), synthesizes a Tech Reference note into 02_Wiki/Tech/<package>/, and runs the full bookkeeping pipeline. First call creates <package-slug>-overview.md; subsequent calls on the same package create focused deep-dive notes.
 ---
 
 # Learn Pipeline Instructions
@@ -45,7 +45,7 @@ Derive two slugs:
 - **`<topic-slug>`**: specific concept for this note, 1-3 words max (e.g. `overview`, `ValueOf`, `dependency-injection`)
 
 **Determine the note type:**
-- If `$OBSIDIAN_VAULT/02_Wiki/Tech/<package-slug>/` does **not yet exist**, or the input points to a package root/repo root → **overview** run. `<topic-slug>` = `overview`.
+- If `$OBSIDIAN_VAULT/02_Wiki/Tech/<package-slug>/` does **not yet exist**, or the input points to a package root/repo root → **overview** run. `<topic-slug>` = `<package-slug>-overview` (e.g. `matplotlib-overview`, `qmd-overview`).
 - If `$OBSIDIAN_VAULT/02_Wiki/Tech/<package-slug>/` already exists → **deep-dive** run. `<topic-slug>` inferred from the URL path, symbol name, or user hint.
 
 Output paths:
@@ -123,7 +123,7 @@ The template differs by note type:
 
 ---
 
-### Template A — Overview (`overview.md`)
+### Template A — Overview (`<package-slug>-overview.md`)
 
 Use when this is the first note for a package/technology.
 
@@ -133,7 +133,7 @@ aliases: [{4-6 key terms, type names, or common abbreviations}]
 tags: [#type/tech_ref, #topic/{technology-or-language-name}]
 ---
 **Parent MOC:** [[Tech-MOC]]
-**Package:** [[{package-slug}/overview]]
+**Package:** [[{package-slug}/{package-slug}-overview]]
 **Source:** {URLs fetched, or "Local: <path>", or "GitHub: <owner>/<repo>"}
 
 ## What It Is
@@ -187,7 +187,7 @@ aliases: [{the symbol name, common abbreviations, related terms}]
 tags: [#type/tech_ref, #topic/{technology-or-language-name}]
 ---
 **Parent MOC:** [[Tech-MOC]]
-**Package:** [[{package-slug}/overview]]
+**Package:** [[{package-slug}/{package-slug}-overview]]
 **Source:** {URLs or repo identifier}
 
 ## Signature
@@ -229,7 +229,7 @@ tags: [#type/tech_ref, #topic/{technology-or-language-name}]
 
 **After creating the note**, if this was an **overview run**, also ensure `## Deep Dives` is present (empty list is fine).
 
-If this was a **deep-dive run**, append the new note as a bullet under `## Deep Dives` in the package's `overview.md`:
+If this was a **deep-dive run**, append the new note as a bullet under `## Deep Dives` in the package's `<package-slug>-overview.md`:
 ```
 * [[{topic-slug}]]
 ```

@@ -87,6 +87,10 @@ If any "Done when" command cannot be run (missing DB, missing network service, m
 
 *Forcing Function:* When you encounter an ambiguous requirement or unclear integration point, resolve the decision NOW rather than deferring to a TODO or runtime check. Use a TypeScript `never` type to force exhaustive switches, a build-time assertion for required config values, or an interface that forces callers to handle error cases. If the decision truly cannot be made at build time, document it as a `checkpoint:decision` deviation — do not silently defer.
 
+**Python directive (inject only if task Files contain `.py`):**
+- Before implementing, read the `python-patterns` skill for this project's Python idioms, type hint conventions, and architectural patterns. Apply these standards throughout your implementation.
+- For test files, read the `python-testing` skill for pytest fixture conventions, marker usage, and coverage expectations.
+
 **Frontend-design directive (inject only if task Files contain `.tsx`, `.jsx`, `.vue`, `.css`, or names containing `component`, `page`, `layout`, `ui`, `view`):**
 - The aesthetic direction was established in the plan mockups at `.plan/mockup-*.html`. Read the relevant mockup(s) before writing any code and implement them faithfully — do not invent a new aesthetic direction
 - Match the mockup's typography, color palette, spacing, and composition exactly
@@ -143,6 +147,8 @@ If reviewer finds **only advisory issues** or approves: mark the task `done` in 
 After the wave completes, go back to Stage 2. Continue until all tasks are `done` or only blocked tasks remain.
 
 When all tasks are `done`:
+- Spawn a `doc-updater` subagent. Pass it: the list of all files modified across completed tasks, and a one-line description of what each task changed. It will update any READMEs, docstrings, or documentation that needs to reflect the changes.
+
 - Read each DoD criterion from PLAN.md's Definition of Done section
 - Verify each criterion is met (check files exist, run commands from "Done when" fields if applicable)
 - Report: ✅ or ❌ per criterion with one-line explanation
