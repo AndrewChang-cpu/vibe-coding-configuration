@@ -17,6 +17,7 @@ npx vibe-setup --cursor           # Cursor only
 npx vibe-setup --codex            # Codex only
 npx vibe-setup --claude --cursor  # mix and match
 npx vibe-setup --claude --yes     # skip confirmation prompts
+npx vibe-setup --claude --reconfigure  # re-prompt for API keys and Obsidian vault path
 ```
 
 Always pull the latest version:

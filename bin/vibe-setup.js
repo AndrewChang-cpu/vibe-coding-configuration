@@ -10,6 +10,7 @@ const flagCursor = args.includes('--cursor');
 const flagCodex = args.includes('--codex');
 const flagAll = args.includes('--all');
 const flagYes = args.includes('--yes') || args.includes('-y');
+const flagReconfigure = args.includes('--reconfigure') || args.includes('-r');
 
 async function run() {
   let tools = [];
@@ -53,7 +54,7 @@ async function run() {
 
   for (const tool of tools) {
     const { setup } = require(path.join(__dirname, '..', tool, 'setup.js'));
-    await setup(cwd, { yes: flagYes });
+    await setup(cwd, { yes: flagYes, reconfigure: flagReconfigure });
   }
 
   console.log('[SUCCESS] Bootstrapping complete.');

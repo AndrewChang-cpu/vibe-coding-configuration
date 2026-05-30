@@ -26,8 +26,27 @@ function writeVibeSetup(newKeys) {
 
 // keyDefs: [{ name: 'SOME_KEY', hint: 'where to get it' }]
 // Returns an object of resolved key-value pairs (skipped keys are absent).
-async function resolveKeys(keyDefs, { yes = false } = {}) {
+async function resolveKeys(keyDefs, { yes = false, reconfigure = false } = {}) {
   const stored = readVibeSetup();
+
+  if (reconfigure) {
+    const { default: inquirer } = await import('inquirer');
+    console.log('\nReconfiguring API keys. Press Enter to keep existing value.\n');
+    const updated = {};
+    for (const { name, hint } of keyDefs) {
+      const existing = stored[name] || process.env[name];
+      const { value } = await inquirer.prompt([{
+        type: 'password',
+        name: 'value',
+        message: `${name}${hint ? ` (${hint})` : ''}${existing ? ' [Enter to keep]' : ''}:`,
+        mask: '*',
+      }]);
+      updated[name] = value || existing || '';
+    }
+    writeVibeSetup(updated);
+    return updated;
+  }
+
   const resolved = {};
   const missing = [];
   let anyFromFile = false;
@@ -77,4 +96,4 @@ async function resolveKeys(keyDefs, { yes = false } = {}) {
   return { ...resolved, ...prompted };
 }
 
-module.exports = { resolveKeys };
+module.exports = { resolveKeys, readVibeSetup, writeVibeSetup };

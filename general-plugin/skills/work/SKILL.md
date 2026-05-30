@@ -25,12 +25,16 @@ Read all `.plan/*.md` files that exist. Extract the Definition of Done criteria 
 Read `.plan/TASKS.md` in full. Build a mental model of:
 - All tasks (ID, status, depends_on, files, what, done-when)
 - Which tasks are `done`
+- Which tasks are `reviewed`
 - Which tasks are `pending` with all dependencies satisfied (ready)
 - Which tasks are `pending` but blocked by incomplete dependencies
 
 ## Stage 2 — CHECK COMPLETION
 If all tasks are `done`:
 - Proceed directly to Stage 6 (DoD verification).
+
+If all tasks are `reviewed` (none are `done`, none are `pending`):
+- Proceed to Stage 6b (integration review).
 
 If no tasks are ready (pending tasks exist but all are blocked):
 - Print which tasks are blocked and what they're waiting on.
@@ -67,6 +71,10 @@ STEP 0 — TESTABILITY CHECK: Before writing any tests, check whether the code y
 If these appear in code you control, fix the design first. If they are in existing code you cannot change, raise STATUS: BLOCKED explaining the testability constraint. Do not work around untestable design with deep mocking.
 
 STEP 1 — RED: Write the tests listed in the task's "Tests:" field first — one test at a time. If "Tests:" is absent or "N/A", derive tests from the "Done when" criteria. Structure each test as Arrange / Act / Assert. Run them immediately. They MUST fail. Record the exact failure output. If a test passes immediately, it is testing the wrong thing — fix it. Do not write any implementation code until you have seen a failing test.
+
+Before writing any implementation, enumerate every way the function can exit: success, error return, exception, loop exhausted without condition met, cleanup on failure. Each exit path requires its own test. If you only have tests for the success path, you have not finished the RED phase.
+
+For any mechanism whose job is to reject input or prevent an action (validator, rate limiter, sandbox, access control): at least one test must attempt to circumvent it using adversarial input. Confirming that normal inputs pass is not sufficient.
 
 Test quality rules (violations are grounds for reviewer rejection):
 - One behavior per test — if the name contains "and", split the test
@@ -106,6 +114,7 @@ If any "Done when" command cannot be run (missing DB, missing network service, m
 - Actual failing test output from the RED phase (not a description that tests were written)
 - Actual passing test output from the GREEN phase (not a claim that tests pass)
 - Actual output of every "Done when" command (not a claim that criteria are met)
+- Confirmation that every value read from the runtime environment (env vars, secrets, config keys) not defined in the code itself is provisioned in every deployment artifact within this task's scope — or a STATUS: DONE_WITH_CONCERNS naming the unprovisioned dependency if the relevant deployment file is outside this task's Files
 
 ## Stage 5 — REVIEW AND FIX LOOP
 After all implementers in the wave report back, handle each status:
@@ -141,12 +150,21 @@ After all implementers in the wave report back, handle each status:
 
 If reviewer finds **blocking issues**: have the implementer fix them (re-dispatch with the reviewer's findings), then re-review. Repeat until clean.
 
-If reviewer finds **only advisory issues** or approves: mark the task `done` in `.plan/TASKS.md` by editing the `**Status:**` line from `` `pending` `` to `` `done` ``.
+If reviewer finds **only advisory issues** or approves: mark the task `reviewed` in `.plan/TASKS.md` by editing the `**Status:**` line from `` `in-progress` `` to `` `reviewed` ``.
 
 ## Stage 6 — REPEAT OR VERIFY
-After the wave completes, go back to Stage 2. Continue until all tasks are `done` or only blocked tasks remain.
+After the wave completes, go back to Stage 2. Continue until all tasks are `reviewed` or only blocked tasks remain.
 
-When all tasks are `done`:
+## Stage 6b — INTEGRATION REVIEW
+When all tasks reach `reviewed`, run a holistic review of all changes together — not per-task, but the full diff:
+
+1. Collect the union of all files modified across every task.
+2. Spawn the `vibe:review` skill (code-reviewer + security-reviewer + python-reviewer as applicable) passing the full file list.
+3. If the integration review finds **blocking issues**: re-open each affected task to `in-progress` in TASKS.md, re-dispatch implementers with the reviewer's findings, run per-task review again, then re-run the integration review. Repeat until clean.
+4. When the integration review is clean: promote all `reviewed` tasks to `done` in TASKS.md.
+5. Proceed to DoD verification.
+
+## Stage 6c — DOD VERIFICATION
 - Spawn a `doc-updater` subagent. Pass it: the list of all files modified across completed tasks, and a one-line description of what each task changed. It will update any READMEs, docstrings, or documentation that needs to reflect the changes.
 
 - Read each DoD criterion from PLAN.md's Definition of Done section
@@ -178,8 +196,10 @@ If any DoD criteria fail:
 <subagent_rules>
 - Never make implementer subagents read PLAN.md or TASKS.md directly — provide all context in the prompt
 - Never dispatch multiple implementers for the same task simultaneously
-- Never skip the reviewer pass — even for simple tasks
+- Never skip the per-task reviewer pass — even for simple tasks
 - Never advance to the next wave while a reviewer has open blocking issues
+- Never mark a task `done` after per-task review — mark it `reviewed`; only the integration review promotes tasks to `done`
+- Never skip the integration review (Stage 6b) — it runs once, on the full diff, after all tasks reach `reviewed`
 - Never output `<promise>ALL TASKS COMPLETE</promise>` unless every DoD criterion is verified
 - Never let a reviewer approve a task whose STATUS: DONE report omits RED-phase failure output, GREEN-phase pass output, or Done-when command outputs
 - Never let a reviewer approve a task's Done-when criteria without re-executing those commands itself

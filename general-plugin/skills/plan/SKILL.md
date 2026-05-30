@@ -63,6 +63,8 @@ If absent, note this for Stage 2.
 
 **Investigation principle (applies throughout all stages):** Before asking the user about any factual uncertainty — or parking it as an Open Question — first attempt to resolve it yourself using available tools. You have unrestricted tool access: read files, run bash commands, search the web, spawn agents, inspect the codebase. Only escalate to the user or defer to Open Questions if your investigation comes up empty or ambiguous.
 
+**External claim verification:** When processing findings from reviewers, automated tools, CI output, or any source outside the current conversation — verify each claim against actual code (Read, Bash, Grep) before categorizing it as "confirmed." "Confirmed real" is a claim you make after checking, not one you inherit from the source. If you cannot verify a claim with available tools, present it as "unverified" and note what check would confirm it.
+
 If the probe reveals two or more clearly independent subsystems (separate data stores, separate deployment targets, no shared core logic), flag this before the conversation begins: tell the user you're seeing multiple independent projects and ask whether to plan them together or split into separate /vibe:plan sessions. Splitting produces better plans and prevents scope bleed into the tasks skill.
 
 ## Stage 2 — OPEN
@@ -124,10 +126,12 @@ Before moving to the decision gate, invoke a subagent using the `Agent` tool to 
 >
 > Specifically, find:
 > 1. **Missing Implementation Details:** What will a developer have to guess about? (e.g., specific library choices, exact data transformation steps, internal API signatures, or complex logic branches).
-> 2. **Edge Cases & Error States:** What happens when things go wrong? (e.g., network failure, malformed input, race conditions, or boundary action failures).
+> 2. **Edge Cases & Error States:** For each failure mode (network failure, malformed input, race condition, invalid state): what does the system do, what does the caller receive, and what is logged? Name specific outcomes — HTTP status codes, error types, log entries. Vague answers like 'it returns an error' are not acceptable.
 > 3. **Logical Contradictions:** Are there any requirements that conflict with each other or the chosen tech stack? (e.g., a Go service performing language-specific parsing — Python AST analysis, Ruby introspection — that would be weaker than doing it in the language's own runtime, and carries hidden infrastructure consequences)
 > 4. **Vague Assumptions:** What are we assuming that hasn't been explicitly confirmed?
-> 5. **Auth per connection type:** For each connection type the system exposes (HTTP REST, WebSocket, SSE, long-poll), explicitly state how credentials are transmitted. Flag any design that passes tokens in URL query parameters or path segments — these appear in server access logs and browser history. The correct pattern for WebSocket auth is a first-message protocol or a short-lived ticket, not a URL token.
+> 5. **Async failure behavior:** For every operation that blocks, polls, or waits — background tasks, polling loops, streaming — what is the maximum duration, and what observable behavior does the system produce when it expires? "It will time out" is not an answer. Name the timeout value and the failure the caller receives.
+> 6. **Security mechanism depth:** For each security mechanism (rate limiter, validator, sandbox, access control): is the description specific enough that a developer cannot implement it insecurely while satisfying it? Name the key, field, or algorithm the mechanism relies on. If it can't be named, the mechanism is underspecified.
+> 7. **Auth per connection type:** For each connection type the system exposes (HTTP REST, WebSocket, SSE, long-poll), explicitly state how credentials are transmitted. Flag any design that passes tokens in URL query parameters or path segments — these appear in server access logs and browser history. The correct pattern for WebSocket auth is a first-message protocol or a short-lived ticket, not a URL token.
 >
 > Return a numbered list of questions. Each item must be 2–4 sentences structured as: (1) the system area and what you observed, (2) what the gap or ambiguity is, (3) the specific question for the user. Do NOT return bare one-liner questions — every question must carry its context so the user understands why you're asking.
 
@@ -140,6 +144,8 @@ Examples of what to probe (shared with the Architect):
 - Deployment edge cases: what if a dependency is unavailable at startup, cold start behavior
 
 ## Stage 5 — DECISION GATE
+**This gate is mandatory and must not be skipped.** Do not advance to Stage 6 even when all decisions have been gathered and the architect review is fully resolved. The gate exists for the user to surface anything that feels unresolved — not just for the skill to declare readiness.
+
 When all applicable topics have specific answers and the Architect Review is clean:
 - AskUserQuestion: "Ready to write the plan?" → ["Write it", "Keep exploring"]
 - If "Keep exploring": ask what feels unresolved or what they want to add
@@ -191,6 +197,8 @@ Review the planning conversation for major technical pivots or architectural dec
 1. For each significant decision, extract the Context, Decision, and Rationale.
 2. Automatically generate standardized ADR markdown files in `docs/adr/` (e.g., `docs/adr/0001-choice-of-database.md`).
 3. If the rationale is missing or weak for a decision, use the `Agent` tool to perform a quick audit and ask the user to fill the gap before writing the file.
+
+If no decisions meet the threshold for an ADR (no major pivots, no competing architectural approaches considered, all choices were obvious implementation-level decisions), explicitly state "No ADRs generated — no architectural pivots identified in this session" rather than silently omitting the stage.
 
 ## Stage 10 — WRITE
 **Archive existing plan (runs first, only when `archive_mode = true`):**
