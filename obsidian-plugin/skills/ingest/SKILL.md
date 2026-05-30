@@ -29,33 +29,6 @@ Use your terminal access to run the appropriate Marker command on the target.
 - If the target is a single file, run: `marker_single <target> "$OBSIDIAN_VAULT/01_Raw_Sources1/MDs/"`
 - If the target is a directory, run: `marker <target> "$OBSIDIAN_VAULT/01_Raw_Sources1/MDs/"`
 
-**After conversion, enforce the 100-character path limit:**
-Marker names each output subdirectory after the source filename verbatim, which can exceed the Google Drive property limit of 124 bytes (key + value). After running marker, check for and rename any output subdirectory whose path (relative to the vault root) exceeds **100 characters** using this shell snippet:
-
-```bash
-BASE="$OBSIDIAN_VAULT/01_Raw_Sources1/MDs/<course-subdir>"
-find "$BASE" -mindepth 1 -maxdepth 1 -type d | while read dir; do
-  # Check the FILE path (dir/dir.md), not just the directory path
-  md_file="$dir/$(basename "$dir").md"
-  rel="${md_file#$OBSIDIAN_VAULT/}"
-  if [ ${#rel} -gt 100 ]; then
-    # Calculate max slug length so that dir/slug.md ≤ 100 chars
-    prefix="${dir%/*}/"
-    prefix_rel="${prefix#$OBSIDIAN_VAULT/}"
-    max=$(( (100 - ${#prefix_rel} - 4) / 2 ))  # 4 = slash + .md
-    slug=$(basename "$dir" | tr '[:upper:]' '[:lower:]' | sed 's/[^a-z0-9]/-/g' | sed 's/-\+/-/g' | sed 's/^-//;s/-$//' | cut -c1-$max)
-    new_dir="$(dirname "$dir")/$slug"
-    # Rename the .md file inside first, then the directory
-    old_md="$dir/$(basename "$dir").md"
-    [ -f "$old_md" ] && mv "$old_md" "$dir/$slug.md"
-    mv "$dir" "$new_dir"
-    echo "Renamed: $(basename "$dir") → $slug"
-  fi
-done
-```
-
-Run this for each course subdirectory after conversion. The rule: **the full file path (dir/dir.md) must be ≤ 100 characters relative to the vault root**.
-
 ## Step 2: Synthesis & Template Application
 Read the newly generated raw Markdown files in `$OBSIDIAN_VAULT/01_Raw_Sources1/MDs/`. For EACH file, create a corresponding "Study Guide" note in the `$OBSIDIAN_VAULT/02_Wiki/` directory.
 
