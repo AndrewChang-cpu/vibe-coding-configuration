@@ -21,15 +21,22 @@ fi
 
 touch "$SESSION_FLAG"
 
-PROMPT='Review the conversation that just completed. If you identified any genuinely useful patterns, code style preferences, common pitfalls, or architecture decisions that would benefit future work on this project, suggest adding them to .vibe/lessons.md.
+PROMPT='Review the conversation that just completed. Check whether any lessons belong in .vibe/lessons.md — a file for project-specific coding patterns in THIS codebase.
 
-Only suggest patterns that are:
-1. Project-specific (not general best practices already covered elsewhere)
-2. Repeatedly applicable (not one-off solutions)
-3. Non-obvious (insights that are not immediately apparent)
-4. Actionable (clear guidance for future development)
+A lesson qualifies ONLY if ALL of these are true:
+1. It concerns the code in the current working directory (not Claude Code itself, not plugin management, not general best practices)
+2. It would recur on future tasks in this same repo
+3. It is non-obvious — a senior engineer unfamiliar with this project would not guess it
+4. It is actionable: "when X, do Y"
 
-If no such patterns emerged from this conversation, respond with: No new patterns to extract.'
+Disqualified automatically (respond with "No new patterns to extract"):
+- Anything about Claude Code features, plugins, hooks, skills, or /commands
+- Anything about git workflow, commit conventions, or PR practices in general
+- Explanations of how a tool or framework works in the abstract
+- One-off debugging steps that fixed a specific bug but teach nothing reusable
+- Patterns that apply to every project equally
+
+If a qualifying lesson exists, suggest the exact text to append. Otherwise respond with: No new patterns to extract.'
 
 jq -n --arg reason "$PROMPT" '{"decision": "block", "reason": $reason}'
 exit 0
