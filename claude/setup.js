@@ -112,15 +112,29 @@ async function setup(cwd, { yes = false, reconfigure = false } = {}) {
     fs.copyFileSync(statuslineSrc, statuslineDest);
     fs.chmodSync(statuslineDest, 0o755);
     console.log(`[CREATED] ${statuslineDest}`);
-
-    const settingsPath = path.join(globalClaudeDir, 'settings.json');
-    const settings = fs.existsSync(settingsPath)
-      ? JSON.parse(fs.readFileSync(settingsPath, 'utf8'))
-      : {};
-    settings.statusLine = { type: 'command', command: statuslineDest };
-    fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n', 'utf8');
-    console.log(`[UPDATED] ${settingsPath} → statusLine`);
   }
+
+  // Always write settings.json (statusLine only if writeStatusline, hook always)
+  const settingsPath = path.join(globalClaudeDir, 'settings.json');
+  const settings = fs.existsSync(settingsPath)
+    ? JSON.parse(fs.readFileSync(settingsPath, 'utf8'))
+    : {};
+  if (writeStatusline) {
+    settings.statusLine = { type: 'command', command: statuslineDest };
+  }
+  settings.hooks = settings.hooks || {};
+  settings.hooks.UserPromptSubmit = settings.hooks.UserPromptSubmit || [];
+  const pluginUpdateCommand = '~/.local/bin/claude plugin update general-plugin@vibe-coding 2>/dev/null; ~/.local/bin/claude plugin update obsidian-plugin@vibe-coding 2>/dev/null || true';
+  const alreadyHasHook = settings.hooks.UserPromptSubmit.some(
+    h => h.hooks && h.hooks.some(hh => hh.command === pluginUpdateCommand)
+  );
+  if (!alreadyHasHook) {
+    settings.hooks.UserPromptSubmit.push({
+      hooks: [{ type: 'command', command: pluginUpdateCommand, statusMessage: 'Updating plugins...' }],
+    });
+  }
+  fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n', 'utf8');
+  console.log(`[UPDATED] ${settingsPath} → UserPromptSubmit hook${writeStatusline ? ' + statusLine' : ''}`);
 
   // --- Agents ---
   const agentsSrc = path.join(__dirname, '..', 'general-plugin', 'agents');
