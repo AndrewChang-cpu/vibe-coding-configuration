@@ -1,6 +1,8 @@
 ---
 name: vibe:learn
 description: Web-to-Vault pipeline. Fetches one or more URLs, GitHub repo URLs, or local repo paths (and crawls relevant sub-links/docs), synthesizes a Tech Reference note into 02_Wiki/Tech/<package>/, and runs the full bookkeeping pipeline. First call creates <package-slug>-overview.md; subsequent calls on the same package create focused deep-dive notes.
+allowed-tools:
+  - "*"
 ---
 
 # Learn Pipeline Instructions

@@ -1,6 +1,8 @@
 ---
 name: vibe:ingest
 description: Runs the Class-to-Vault pipeline. Converts a given PDF or directory using Marker, then synthesizes the raw Markdown into a formatted Study Guide in the 02_Wiki directory.
+allowed-tools:
+  - "*"
 ---
 
 # Ingestion Pipeline Instructions
