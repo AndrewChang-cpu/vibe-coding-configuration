@@ -26,8 +26,8 @@ Do not rely on an `export` command persisting across tool calls — substitute t
 
 ## Step 1: Conversion
 Use your terminal access to run the appropriate Marker command on the target.
-- If the target is a single file, run: `marker_single <target> --output_dir "$OBSIDIAN_VAULT/01_Raw_Sources1/MDs/"`
-- If the target is a directory, run: `marker <target> --output_dir "$OBSIDIAN_VAULT/01_Raw_Sources1/MDs/"`
+- If the target is a single file, run: `marker_single <target> --output_dir "$OBSIDIAN_VAULT/01_Raw_Sources/MDs/"`
+- If the target is a directory, run: `marker <target> --output_dir "$OBSIDIAN_VAULT/01_Raw_Sources/MDs/"`
 
 Note: `marker` takes the output path via `--output_dir`, not as a positional argument.
 
@@ -35,7 +35,7 @@ Note: `marker` takes the output path via `--output_dir`, not as a positional arg
 After the batch run, check that each expected output directory actually contains a `.md` file:
 
 ```bash
-for dir in "$OBSIDIAN_VAULT/01_Raw_Sources1/MDs/"/*/; do
+for dir in "$OBSIDIAN_VAULT/01_Raw_Sources/MDs/"/*/; do
   if ! ls "$dir"*.md &>/dev/null; then
     echo "FAILED (empty): $dir"
   fi
@@ -45,13 +45,13 @@ done
 For any empty directories, retry with CPU forced (fixes a MPS backend crash on Apple Silicon where surya's layout model throws `torch.AcceleratorError: index 8192 is out of bounds`):
 
 ```bash
-TORCH_DEVICE=cpu marker_single "<original_pdf_path>" --output_dir "$OBSIDIAN_VAULT/01_Raw_Sources1/MDs/"
+TORCH_DEVICE=cpu marker_single "<original_pdf_path>" --output_dir "$OBSIDIAN_VAULT/01_Raw_Sources/MDs/"
 ```
 
 Repeat until all output directories contain at least one `.md` file before proceeding.
 
 ## Step 2: Synthesis & Template Application
-Read the newly generated raw Markdown files in `$OBSIDIAN_VAULT/01_Raw_Sources1/MDs/`. For EACH file, create a corresponding "Study Guide" note in the `$OBSIDIAN_VAULT/02_Wiki/` directory.
+Read the newly generated raw Markdown files in `$OBSIDIAN_VAULT/01_Raw_Sources/MDs/`. For EACH file, create a corresponding "Study Guide" note in the `$OBSIDIAN_VAULT/02_Wiki/` directory.
 
 You MUST strictly use the following Markdown template for every generated note. Do not deviate:
 

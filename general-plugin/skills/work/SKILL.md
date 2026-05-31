@@ -106,7 +106,7 @@ If any "Done when" command cannot be run (missing DB, missing network service, m
 
 **Status protocol — end your response with exactly one of:**
 - `STATUS: DONE` — all three steps completed; RED failure output, GREEN pass output, and all "Done when" command outputs are included in this response
-- `STATUS: DONE_WITH_CONCERNS — [brief description]` — steps completed but flagging something; all required outputs still present
+- `STATUS: DONE_WITH_CONCERNS — [brief description]` — steps completed but a non-obvious decision was made autonomously (e.g., choosing between two valid approaches, resolving an ambiguous requirement, picking a fix strategy when multiple are defensible). The note must state: what the decision was, what the alternatives were, and why this choice was made. All required outputs still present.
 - `STATUS: NEEDS_CONTEXT — [what is missing]` — cannot proceed without more information
 - `STATUS: BLOCKED — [reason]` — one or more "Done when" commands cannot be executed due to missing infrastructure; specify which command and what is needed
 
@@ -148,7 +148,7 @@ After all implementers in the wave report back, handle each status:
    
    Levels 1–3 check programmatically. Level 4 is already covered by re-executing "Done when" commands in step 3. Report any failures as BLOCKING.
 
-If reviewer finds **blocking issues**: have the implementer fix them (re-dispatch with the reviewer's findings), then re-review. Repeat until clean.
+If reviewer finds **blocking issues**: have the implementer fix them (re-dispatch with the reviewer's findings), then re-review. Repeat until clean. When fixing, if the correction requires a non-obvious design decision, make the most functionally correct call autonomously and report `STATUS: DONE_WITH_CONCERNS` with the decision and rationale. Never block or ask the user for input during a fix loop.
 
 If reviewer finds **only advisory issues** or approves: mark the task `reviewed` in `.plan/TASKS.md` by editing the `**Status:**` line from `` `in-progress` `` to `` `reviewed` ``.
 
@@ -159,8 +159,8 @@ After the wave completes, go back to Stage 2. Continue until all tasks are `revi
 When all tasks reach `reviewed`, run a holistic review of all changes together — not per-task, but the full diff:
 
 1. Collect the union of all files modified across every task.
-2. Spawn the `vibe:review` skill (code-reviewer + security-reviewer + python-reviewer as applicable) passing the full file list.
-3. If the integration review finds **blocking issues**: re-open each affected task to `in-progress` in TASKS.md, re-dispatch implementers with the reviewer's findings, run per-task review again, then re-run the integration review. Repeat until clean.
+2. Spawn the `vibe:review` skill (code-reviewer + security-reviewer + python-reviewer as applicable) passing the full file list. Brief the integration reviewer to specifically look for: **(1) cross-file consistency** — symbols, env vars, or assumptions removed in one task still referenced in test fixtures, conftest, config, or deployment specs touched by other tasks; **(2) emergent behavior** — state machine inconsistencies, error-type conflation, or resource-acquire-before-authorize patterns that only become visible when multiple changes are read together.
+3. If the integration review finds **blocking issues**: re-open each affected task to `in-progress` in TASKS.md, re-dispatch implementers with the reviewer's findings, run per-task review again, then re-run the integration review. Repeat until clean. Resolution protocol is the same as Stage 5: auto-fix if the correction is obvious; use `DONE_WITH_CONCERNS` if it requires a non-obvious decision.
 4. When the integration review is clean: promote all `reviewed` tasks to `done` in TASKS.md.
 5. Proceed to DoD verification.
 
@@ -176,7 +176,14 @@ If all DoD criteria pass:
 <promise>ALL TASKS COMPLETE</promise>
 ```
 
-After outputting the completion promise, ask once:
+**Concerns rollup:** Immediately after the completion promise, collect every `DONE_WITH_CONCERNS` item recorded across all tasks and fix loops during this run. Output them as:
+```
+## Autonomous decisions — please verify
+- **[Task ID]** `[file:line]` — [decision made] | Alternatives: [x, y] | Rationale: [why this choice]
+```
+If there are no concerns, omit this section entirely.
+
+After the rollup (or immediately after the promise if no concerns), ask once:
 > "Extract learnings from this session? (y/n)"
 
 If yes: read `.plan/PLAN.md` and `.plan/TASKS.md`. Extract into `.plan/LEARNINGS.md` with 4 sections:

@@ -50,7 +50,7 @@ Derive two slugs:
 
 Output paths:
 - Wiki note: `$OBSIDIAN_VAULT/02_Wiki/Tech/<package-slug>/<topic-slug>.md`
-- Raw archive: `$OBSIDIAN_VAULT/01_Raw_Sources1/MDs/web/<package-slug>/<topic-slug>.md`
+- Raw archive: `$OBSIDIAN_VAULT/01_Raw_Sources/MDs/web/<package-slug>/<topic-slug>.md`
 
 Enforce the 100-character path limit on raw archive paths (relative to the vault root). Shorten `<topic-slug>` if needed.
 
@@ -58,7 +58,7 @@ Enforce the 100-character path limit on raw archive paths (relative to the vault
 
 ## Step 2: Crawl & Fetch
 
-Execute the branch matching the source type. All branches end by saving raw content to `$OBSIDIAN_VAULT/01_Raw_Sources1/MDs/web/<package-slug>/<topic-slug>.md` with `---\n# Source: <identifier>\n---\n` separators.
+Execute the branch matching the source type. All branches end by saving raw content to `$OBSIDIAN_VAULT/01_Raw_Sources/MDs/web/<package-slug>/<topic-slug>.md` with `---\n# Source: <identifier>\n---\n` separators.
 
 ### Branch A — Web (existing behavior)
 

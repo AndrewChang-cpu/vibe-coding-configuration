@@ -1,6 +1,6 @@
 {
   "name": "obsidian-plugin",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Obsidian vault pipeline skills — ingest PDFs into the vault and learn from web/GitHub sources.",
   "author": { "name": "AndrewChang-cpu" },
   "repository": "https://github.com/AndrewChang-cpu/vibe-coding-configuration",
