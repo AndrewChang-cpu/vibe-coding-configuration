@@ -21,8 +21,7 @@ If either is missing:
 
 <execution_flow>
 ## Stage 1 — READ
-Read all `.plan/*.md` files that exist. Extract the Definition of Done criteria (checkbox list) from PLAN.md. If the plan is split, also read PRD.md, SYSTEM-DESIGN.md, and UI-SPEC.md — their content will be needed when constructing implementer prompts.
-Read `.plan/TASKS.md` in full. Build a mental model of:
+Read `.plan/TASKS.md` and `.plan/PLAN.md` only. Extract the Definition of Done criteria from PLAN.md. Build a mental model of:
 - All tasks (ID, status, depends_on, files, what, done-when)
 - Which tasks are `done`
 - Which tasks are `reviewed`
@@ -54,6 +53,7 @@ For each task in the wave, dispatch one implementer subagent in parallel. Each s
 - Project name and type (from PLAN.md overview)
 - This task's position in the overall plan (e.g. "Task 3 of 8")
 - Which tasks this depends on and what they produced (from TASKS.md context)
+- If the task requires context from PRD.md, SYSTEM-DESIGN.md, or UI-SPEC.md, instruct the subagent to read those files directly — do NOT read them into the orchestrator context first
 
 **Task block (verbatim):**
 - Task ID and name
@@ -116,6 +116,9 @@ If any "Done when" command cannot be run (missing DB, missing network service, m
 - Actual output of every "Done when" command (not a claim that criteria are met)
 - Confirmation that every value read from the runtime environment (env vars, secrets, config keys) not defined in the code itself is provisioned in every deployment artifact within this task's scope — or a STATUS: DONE_WITH_CONCERNS naming the unprovisioned dependency if the relevant deployment file is outside this task's Files
 
+**Context discipline — orchestrator instruction:**
+When an implementer returns, extract and retain only: the STATUS line, the list of files written/modified, and any DONE_WITH_CONCERNS notes. Discard the full test logs and Done-when command output from the orchestrator context — the reviewer subagent will re-execute those commands independently and does not need the implementer's output echoed.
+
 ## Stage 5 — REVIEW AND FIX LOOP
 After all implementers in the wave report back, handle each status:
 
@@ -147,6 +150,9 @@ After all implementers in the wave report back, handle each status:
    - **(4) Functional** — actually works when invoked (re-run the "Done when" commands)
    
    Levels 1–3 check programmatically. Level 4 is already covered by re-executing "Done when" commands in step 3. Report any failures as BLOCKING.
+
+**Reviewer return format — terse only:**
+Return exactly: verdict (APPROVED or REJECTED), blocking issues as a short bulleted list (one line each), and advisory items as a short bulleted list. Do NOT echo command output, test logs, or full file contents in your response — the orchestrator only needs the verdict and findings.
 
 If reviewer finds **blocking issues**: have the implementer fix them (re-dispatch with the reviewer's findings), then re-review. Repeat until clean. When fixing, if the correction requires a non-obvious design decision, make the most functionally correct call autonomously and report `STATUS: DONE_WITH_CONCERNS` with the decision and rationale. Never block or ask the user for input during a fix loop.
 

@@ -51,26 +51,42 @@ TORCH_DEVICE=cpu marker_single "<original_pdf_path>" --output_dir "$OBSIDIAN_VAU
 Repeat until all output directories contain at least one `.md` file before proceeding.
 
 ## Step 2: Synthesis & Template Application
-Read the newly generated raw Markdown files in `$OBSIDIAN_VAULT/01_Raw_Sources/MDs/`. For EACH file, create a corresponding "Study Guide" note in the `$OBSIDIAN_VAULT/02_Wiki/` directory.
 
-You MUST strictly use the following Markdown template for every generated note. Do not deviate:
+**IMPORTANT: Do NOT read raw Markdown files or write notes directly in this context.** Reading many large source files into the main context will exhaust the context window and cause hallucinated output.
 
----
-aliases: [{extract 4-6 key terms, comma-separated}]
-tags: [#type/study_guide, #topic/{infer_from_content}]
----
-**Parent MOC:** [[{Relevant_MOC_Name}]]
-**Raw Source:** [[{stem}/{stem}]]
+Instead, for each raw MD file produced in Step 1, **spawn a subagent** (using the Agent tool) to handle the read + write cycle. The subagent reads the source, synthesizes the note, and writes the file — none of that content accumulates here.
 
-## Executive Summary
-{A concise 2-3 sentence high-level overview of the document.}
+**Batching rules:**
+- Files ≤ 300 lines: batch up to 5 per agent
+- Files 300–800 lines: batch up to 3 per agent
+- Files > 800 lines: one file per agent
 
-## Core Concepts
-* **{Concept 1}**: {Definition or explanation}
-* **{Concept 2}**: {Definition or explanation}
+**Agent prompt template** (fill in the bracketed values for each batch):
 
-## Important Formulas / Logic (If applicable)
-{Extract any critical formulas. If none, omit.}
+> Read the following raw Markdown file(s): [list of absolute paths]. For each file, write a Study Guide note to [wiki output path] using EXACTLY this template — do not deviate:
+>
+> ```
+> ---
+> aliases: [{extract 4-6 key terms, comma-separated}]
+> tags: [#type/study_guide, #topic/{infer_from_content}]
+> ---
+> **Parent MOC:** [[{Relevant_MOC_Name}]]
+> **Raw Source:** [[{stem}/{stem}]]
+>
+> ## Executive Summary
+> {A concise 2-3 sentence high-level overview of the document.}
+>
+> ## Core Concepts
+> * **{Concept 1}**: {Definition or explanation}
+> * **{Concept 2}**: {Definition or explanation}
+>
+> ## Important Formulas / Logic (If applicable)
+> {Extract any critical formulas. If none, omit.}
+> ```
+>
+> Write each output file directly — do not return the note content in your response.
+
+Launch batches in parallel where possible. Wait for all agents to complete before proceeding to Step 3.
 
 ## Step 3: RAG Update
 Execute `qmd embed` to update the vector database so new files are immediately searchable. Also run `qmd embed -c MDs` to keep the raw-sources-only collection in sync.

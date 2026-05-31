@@ -1,16 +1,6 @@
 {
-  "description": "Suggest lessons.md patterns at session end; remind to write tests for new Python files",
+  "description": "Remind to write tests for new Python files",
   "hooks": {
-    "Stop": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/extract-patterns.sh"
-          }
-        ]
-      }
-    ],
     "PostToolUse": [
       {
         "matcher": "Write",
