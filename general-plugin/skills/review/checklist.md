@@ -2,6 +2,8 @@
 
 Use for `/vibe:review` and work-skill task reviewers. REJECT on any blocking item.
 
+**Documented-decision exception:** if `.plan/PLAN.md` *explicitly* names a finding as intentional, deferred, or a required manual step (e.g. a `FIXME_X` placeholder slated for replacement), reclassify it as `ACKNOWLEDGED (documented decision)` and cite the plan line instead of rejecting. Exact matches only — gaps the plan is silent about stay blocking.
+
 ## Blocking
 
 1. **Modularity** — Any new file exceeds 500 lines; split into focused modules.

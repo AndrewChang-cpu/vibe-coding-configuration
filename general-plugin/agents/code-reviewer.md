@@ -18,6 +18,11 @@ Your prompt will specify:
 - **Depth**: `quick`, `standard`, or `deep`
 - **Files**: the list of files to review
 - **Checklist**: the pre-commit checklist content to apply as a second pass
+- **Documented Decisions**: Out-of-Scope / Assumptions / intentional-placeholder notes from `.plan/PLAN.md` (may be empty)
+
+## Documented Decisions
+
+Reclassify a finding to `ACKNOWLEDGED (documented decision)` — citing the plan line — only when the block *explicitly* names it (e.g. a `FIXME_X` placeholder the plan says to replace before deploy). Never on a vague or inferred match; if the plan is silent, report at full severity. Review the whole file regardless — pre-existing gaps the plan ignores stay blockers.
 
 ## Depth Levels
 
@@ -111,6 +116,9 @@ Output findings to terminal as markdown. Group by severity, then by file.
 
 ### INFO
 - `file.ts:12` — [observation, not blocking]
+
+### ACKNOWLEDGED (documented decision)
+- `file.ts:30` — [finding] — reclassified from BLOCKER; `.plan/PLAN.md` documents this: "[cited line]"
 
 ---
 

@@ -27,6 +27,7 @@ Before writing any plan files, ensure you have addressed all applicable topics b
 - Core idea: what they're building, why it needs to exist, who it's for, what "done" looks like
 - Functional requirements: key capabilities, user flows step by step, edge cases, admin/internal/API-only flows
 - Non-functional requirements: performance targets, security posture, reliability expectations, accessibility requirements, internationalization, auditability/logging
+- Production-readiness baseline: walk the cross-cutting baseline (see the Production-Readiness Baseline checklist in <plan_output_format>) and get a specific answer for each item — input validation, authn/authz, rate limiting, resource/size limits, timeouts, transport & secrets, error sanitization, observability, dependency posture. Each item becomes either a DoD criterion or an explicit "N/A — <reason>"; mark the rows that genuinely don't apply rather than skipping the checklist. This is what prevents the security baseline from being discovered one reactive review at a time.
 - UI/UX: does it have a UI? what platform (web/mobile/desktop/CLI/none)? existing design system or brand guidelines?
 - Tech stack constraints: existing infrastructure, team expertise, licensing restrictions, hosting requirements
 - Data model: key entities and their relationships, where data lives, existing schema to work within, migration needs
@@ -161,6 +162,7 @@ Before writing anything, run this pass silently:
 - Are the Definition of Done criteria actually checkable by a human? Vague criteria ("works correctly", "feels responsive") are plan failures.
 - Can every DoD criterion be traced to a named implementation mechanism — a specific function, startup sequence step, or service call described in the system design? Criteria describing startup behaviors ("on restart, jobs are marked failed"), timeout/cleanup paths ("zombie containers are terminated"), or cross-client coordination ("other tabs receive the updated token") are especially prone to naming outcomes without naming mechanisms. If the mechanism isn't named, add it before writing.
 - Can I identify any implementation detail, UX edge case, or ambiguous behavior that the Architect Review missed? If yes, resolve it now.
+- Production-readiness baseline: is every item in the Production-Readiness Baseline checklist either tied to a verifiable DoD criterion or explicitly marked `N/A — <reason>`? A baseline item left blank or implied is a plan failure — it becomes a blocker someone finds in review three waves later. Resolve every item now.
 - Are there Open Questions in my draft that I could have resolved — by asking the user or by using available tools (Bash, Read, Grep, web search, agents)? If yes, resolve them now. The only valid Open Questions are things genuinely unreachable with any tool: live runtime state on a remote server, a third-party API's behavior in production, a decision the user explicitly said to defer.
 - Could a developer implement every item in this plan with zero guesswork, to production quality? For each item, ask: could this be done in more than one way? Does it leave any error path, edge case, or integration detail unresolved? If yes, add the missing detail before writing.
 
@@ -259,6 +261,21 @@ FREEFORM RULE: If the user selects "Other" or says anything that signals free ex
 ## Definition of Done
 - [ ] [specific, verifiable criterion — names an observable outcome]
 - [ ] ...
+
+## Production-Readiness Baseline
+[Every row is either tied to a DoD criterion / a named mechanism, or marked "N/A — <reason>" for the rows that genuinely don't apply. No row may be blank or implied. "Addressed by" cites the DoD item, FR, or design mechanism that satisfies it.]
+
+| Baseline item | What it requires | Status | Addressed by |
+|---------------|------------------|--------|--------------|
+| Input validation | Every external input (body, query/path param, uploaded file, env var) is validated for type/range/format and rejected with a specific status — never silently coerced | ✅ / N/A | ... |
+| AuthN / AuthZ | Every endpoint and connection type states who may call it and how identity **and resource ownership** are checked | ✅ / N/A | ... |
+| Rate limiting / abuse | Every state-changing or resource-spawning endpoint has a documented limit and key | ✅ / N/A | ... |
+| Resource & size limits | Container CPU/memory requests+limits; request-body size caps; concurrency/connection caps | ✅ / N/A | ... |
+| Timeouts | Server read/header/write timeouts; outbound-call timeouts; max duration for every background/polling/streaming op | ✅ / N/A | ... |
+| Transport & secrets | TLS termination point; cookie flags (Secure/HttpOnly/SameSite); secrets sourced from env/secret store, never committed | ✅ / N/A | ... |
+| Error sanitization | Internal errors (stack traces, DB errors, pod/container logs) are logged server-side only, never returned to clients | ✅ / N/A | ... |
+| Observability | Structured logs with correlation; key metrics; what triggers an alert (or "none") | ✅ / N/A | ... |
+| Dependency posture | Dependencies pinned; CVE/scan expectation stated | ✅ / N/A | ... |
 
 ## Artifacts
 - API contract: [.plan/openapi.yaml](.plan/openapi.yaml) | none
@@ -407,4 +424,5 @@ Use the full combined format — all sections from PLAN (including Artifacts, Us
 - Partial UI coverage: every UI state gets a mockup, not just the "main" or "happy path" states
 - Prose bloat: use tables, lists, code blocks, and mockups instead of explanatory prose wherever structure communicates the same information more densely
 - Autonomous deferral: never categorize a finding, issue, or capability as "deferred," "Wave N," or "out of scope" without explicit user confirmation via AskUserQuestion. The Out of Scope section must contain only items the user explicitly agreed to exclude — not items you decided to skip.
+- Blank baseline rows: leaving any Production-Readiness Baseline item unaddressed, implied, or "TBD" — every row is a DoD criterion or an explicit "N/A — <reason>". Skipping the baseline turns a cross-cutting concern into a drip of reactive review blockers.
 </anti_patterns>

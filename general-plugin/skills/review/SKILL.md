@@ -29,6 +29,12 @@ Filter out files that should not be reviewed:
 
 If no reviewable files remain after filtering, print `Nothing to review.` and stop.
 
+## Stage 1.5 — LOAD DOCUMENTED DECISIONS
+
+If `.plan/PLAN.md` exists, read it (and any docs it links) and collect its Out of Scope, Assumptions, and any documented placeholder / deferral / manual step (e.g. "replace `FIXME_ACM_CERT_ARN` before sync") into a **Documented Decisions** block to pass to the agents. If there's no plan, the block is empty.
+
+The whole repo is still reviewed. The block only lets a reviewer reclassify a finding to `ACKNOWLEDGED` when the plan *explicitly* names it as intentional — findings the plan is silent about keep full severity.
+
 ## Stage 2 — DETERMINE DEPTH
 
 Parse the depth from `$ARGUMENTS`:
@@ -44,6 +50,7 @@ Spawn the `code-reviewer` agent. Pass:
 - The depth
 - The filtered file list
 - The full content of `checklist.md`
+- The Documented Decisions block from Stage 1.5 (may be empty)
 
 The agent runs its review at the specified depth and applies the checklist as a second pass. All output goes to terminal.
 
@@ -56,6 +63,7 @@ echo "<file_list>" | grep -q '\.py$'
 
 If yes, spawn the `python-reviewer` agent in parallel with Stage 3c. Pass:
 - The list of Python files being reviewed
+- The Documented Decisions block from Stage 1.5 (may be empty)
 
 Include its CRITICAL/HIGH/MEDIUM findings in the final status.
 
@@ -63,11 +71,12 @@ Include its CRITICAL/HIGH/MEDIUM findings in the final status.
 
 Spawn the `security-reviewer` agent unconditionally (run in parallel with Stage 3b). Pass:
 - The full filtered file list
+- The Documented Decisions block from Stage 1.5 (may be empty)
 
-Include its findings in the final status. Block on any CRITICAL or HIGH finding.
+Include its findings in the final status. Block on any unreconciled CRITICAL or HIGH finding.
 
 ## Stage 4 — FINAL STATUS
 
-After all agents complete, consolidate findings from code-reviewer, python-reviewer (if applicable), and security-reviewer. If the combined review is clean: propose a concise commit message based on the changes.
+After all agents complete, consolidate findings. Move any finding the Documented Decisions block explicitly names to an `ACKNOWLEDGED` section (cite the plan line); it doesn't count toward the verdict. If no unreconciled blockers remain: propose a concise commit message based on the changes.
 
 </execution_flow>
