@@ -51,9 +51,9 @@ Keys are resolved in this order: environment variable → `~/.vibe-setup` → in
 |------|-------|
 | Claude | `~/.claude/CLAUDE.md` (global), `~/.claude/agents/` (global) |
 | Cursor | `.cursor/mcp.json`, `.cursor/rules/`, `.vibe/` |
-| Codex | `AGENTS.md`, `.codex/config.toml`, `.codex/agents/`, `.agents/plugins/marketplace.json`, `.vibe/` |
+| Codex | `~/.codex/AGENTS.md` (global), `~/.codex/config.toml` (global MCP sections), `~/.codex/agents/` (global), `.agents/plugins/marketplace.json` (repo-local development only) |
 
-Re-running is safe — you'll be prompted before `~/.claude/CLAUDE.md` is overwritten. Use `--yes` to skip.
+Re-running is safe — you'll be prompted before global instruction/config files are updated. Use `--yes` to skip.
 
 ## Workflow
 

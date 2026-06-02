@@ -1,7 +1,21 @@
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const { readTemplate, writeFile, execOptional } = require('../shared/utils');
 const { resolveKeys } = require('../shared/keys');
+
+const CODEX_CONFIG_SECTIONS = [
+  'agents',
+  'mcp_servers.github',
+  'mcp_servers.github.env',
+  'mcp_servers.postgres',
+  'mcp_servers.puppeteer',
+  'mcp_servers.sequential-thinking',
+  'mcp_servers.context7',
+  'mcp_servers.tavily',
+  'mcp_servers.tavily.env',
+  'mcp_servers.qmd',
+];
 
 function tomlString(value) {
   return JSON.stringify(value || '');
@@ -73,6 +87,25 @@ args = [
 `;
 }
 
+function removeTomlSections(content, sectionNames) {
+  const targets = new Set(sectionNames);
+  const kept = [];
+  let skipping = false;
+
+  for (const line of content.split('\n')) {
+    const match = line.match(/^\[([^\]]+)\]\s*$/);
+    if (match) skipping = targets.has(match[1]);
+    if (!skipping) kept.push(line);
+  }
+
+  return kept.join('\n').trimEnd();
+}
+
+function mergeCodexConfig(existing, generated) {
+  const base = removeTomlSections(existing, CODEX_CONFIG_SECTIONS);
+  return `${base ? `${base}\n\n` : ''}${generated.trimEnd()}\n`;
+}
+
 function parseMarkdownAgent(content, sourceName) {
   const match = content.match(/^---\n([\s\S]*?)\n---\n([\s\S]*)$/);
   if (!match) throw new Error(`${sourceName} is missing frontmatter`);
@@ -111,9 +144,9 @@ Ported from general-plugin/agents/${fileName}. Keep that Claude Code source file
   ].join('\n');
 }
 
-function writeCodexAgents(cwd) {
+function writeCodexAgents(codexDir) {
   const agentsSrc = path.join(__dirname, '..', 'general-plugin', 'agents');
-  const agentsDest = path.join(cwd, '.codex', 'agents');
+  const agentsDest = path.join(codexDir, 'agents');
   if (!fs.existsSync(agentsSrc)) return;
 
   fs.mkdirSync(agentsDest, { recursive: true });
@@ -159,12 +192,24 @@ function writeLocalMarketplaceIfSourcesExist(cwd) {
 async function setup(cwd, { yes = false, reconfigure = false } = {}) {
   console.log('[INFO] Configuring Codex...');
 
-  // --- .vibe base ---
-  const vibe = path.join(cwd, '.vibe');
-  fs.mkdirSync(vibe, { recursive: true });
+  // --- ~/.codex/AGENTS.md (global) ---
+  const globalCodexDir = path.join(os.homedir(), '.codex');
+  fs.mkdirSync(globalCodexDir, { recursive: true });
+  const globalAgentsPath = path.join(globalCodexDir, 'AGENTS.md');
 
-  // --- AGENTS.md ---
-  writeFile(path.join(cwd, 'AGENTS.md'), readTemplate('global-claude.md'));
+  let writeGlobalAgents = true;
+  if (fs.existsSync(globalAgentsPath) && !yes) {
+    const { default: inquirer } = await import('inquirer');
+    const { override } = await inquirer.prompt([{
+      type: 'confirm',
+      name: 'override',
+      message: '~/.codex/AGENTS.md already exists. Override with latest template?',
+      default: false,
+    }]);
+    writeGlobalAgents = override;
+  }
+
+  if (writeGlobalAgents) writeFile(globalAgentsPath, readTemplate('global-claude.md'));
 
   // --- API keys ---
   const keys = await resolveKeys([
@@ -173,35 +218,32 @@ async function setup(cwd, { yes = false, reconfigure = false } = {}) {
     { name: 'TAVILY_API_KEY',               hint: 'tavily.com' },
   ], { yes, reconfigure });
 
-  // --- .codex/config.toml ---
-  const codexDir = path.join(cwd, '.codex');
-  fs.mkdirSync(codexDir, { recursive: true });
-  const configPath = path.join(codexDir, 'config.toml');
+  // --- ~/.codex/config.toml (global) ---
+  const configPath = path.join(globalCodexDir, 'config.toml');
   let writeConfig = true;
   if (fs.existsSync(configPath) && !yes) {
     const { default: inquirer } = await import('inquirer');
     const { override } = await inquirer.prompt([{
       type: 'confirm',
       name: 'override',
-      message: '.codex/config.toml already exists. Override with latest vibe-setup config?',
-      default: false,
+      message: '~/.codex/config.toml already exists. Update vibe MCP sections?',
+      default: true,
     }]);
     writeConfig = override;
   }
 
   if (writeConfig) {
-    writeFile(
-      configPath,
-      renderCodexConfig({
-        githubToken: keys.GITHUB_PERSONAL_ACCESS_TOKEN || '',
-        context7Key: keys.CONTEXT7_API_KEY || '',
-        tavilyKey: keys.TAVILY_API_KEY || '',
-      })
-    );
+    const generatedConfig = renderCodexConfig({
+      githubToken: keys.GITHUB_PERSONAL_ACCESS_TOKEN || '',
+      context7Key: keys.CONTEXT7_API_KEY || '',
+      tavilyKey: keys.TAVILY_API_KEY || '',
+    });
+    const existingConfig = fs.existsSync(configPath) ? fs.readFileSync(configPath, 'utf8') : '';
+    writeFile(configPath, mergeCodexConfig(existingConfig, generatedConfig));
   }
 
-  // --- Subagents ---
-  writeCodexAgents(cwd);
+  // --- Subagents (global) ---
+  writeCodexAgents(globalCodexDir);
 
   // --- Repo-local marketplace metadata when running from this repository ---
   writeLocalMarketplaceIfSourcesExist(cwd);
