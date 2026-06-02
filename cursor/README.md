@@ -16,7 +16,6 @@ Sets up Cursor IDE configuration in your project.
 
 - `.cursor/mcp.json` — MCP server definitions for Cursor
 - `.cursor/rules/000-main-rules.mdc` — behavioral instructions
-- `.vibe/lessons.md` — self-correction log
 
 ## Example output
 

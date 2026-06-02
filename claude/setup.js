@@ -1,7 +1,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { readTemplate, writeFile, writeFileIfAbsent, exec, execOptional } = require('../shared/utils');
+const { readTemplate, writeFile, exec, execOptional } = require('../shared/utils');
 const { resolveKeys, readVibeSetup, writeVibeSetup } = require('../shared/keys');
 
 async function setup(cwd, { yes = false, reconfigure = false } = {}) {
@@ -29,8 +29,6 @@ async function setup(cwd, { yes = false, reconfigure = false } = {}) {
   // --- .vibe base ---
   const vibe = path.join(cwd, '.vibe');
   fs.mkdirSync(path.join(vibe, 'skills'), { recursive: true });
-
-  writeFileIfAbsent(path.join(vibe, 'lessons.md'), readTemplate('lessons.md'));
 
   // --- API keys ---
   const keys = await resolveKeys([
@@ -114,7 +112,7 @@ async function setup(cwd, { yes = false, reconfigure = false } = {}) {
     console.log(`[CREATED] ${statuslineDest}`);
   }
 
-  // Always write settings.json (statusLine only if writeStatusline, hook always)
+  // Write settings.json for statusLine and remove the legacy cross-plugin updater hook.
   const settingsPath = path.join(globalClaudeDir, 'settings.json');
   const settings = fs.existsSync(settingsPath)
     ? JSON.parse(fs.readFileSync(settingsPath, 'utf8'))
@@ -122,19 +120,22 @@ async function setup(cwd, { yes = false, reconfigure = false } = {}) {
   if (writeStatusline) {
     settings.statusLine = { type: 'command', command: statuslineDest };
   }
-  settings.hooks = settings.hooks || {};
-  settings.hooks.UserPromptSubmit = settings.hooks.UserPromptSubmit || [];
   const pluginUpdateCommand = '~/.local/bin/claude plugin update general-plugin@vibe-coding 2>/dev/null; ~/.local/bin/claude plugin update obsidian-plugin@vibe-coding 2>/dev/null || true';
-  const alreadyHasHook = settings.hooks.UserPromptSubmit.some(
-    h => h.hooks && h.hooks.some(hh => hh.command === pluginUpdateCommand)
-  );
-  if (!alreadyHasHook) {
-    settings.hooks.UserPromptSubmit.push({
-      hooks: [{ type: 'command', command: pluginUpdateCommand, statusMessage: 'Updating plugins...' }],
-    });
+  let removedLegacyHook = false;
+  if (settings.hooks && Array.isArray(settings.hooks.UserPromptSubmit)) {
+    const originalLength = settings.hooks.UserPromptSubmit.length;
+    settings.hooks.UserPromptSubmit = settings.hooks.UserPromptSubmit.filter(
+      h => !(h.hooks && h.hooks.some(hh => hh.command === pluginUpdateCommand))
+    );
+    removedLegacyHook = settings.hooks.UserPromptSubmit.length !== originalLength;
+    if (settings.hooks.UserPromptSubmit.length === 0) delete settings.hooks.UserPromptSubmit;
+    if (Object.keys(settings.hooks).length === 0) delete settings.hooks;
   }
   fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n', 'utf8');
-  console.log(`[UPDATED] ${settingsPath} → UserPromptSubmit hook${writeStatusline ? ' + statusLine' : ''}`);
+  console.log(`[UPDATED] ${settingsPath} → ${[
+    writeStatusline ? 'statusLine' : null,
+    removedLegacyHook ? 'removed legacy plugin update hook' : null,
+  ].filter(Boolean).join(' + ') || 'settings checked'}`);
 
   // --- Agents ---
   const agentsSrc = path.join(__dirname, '..', 'general-plugin', 'agents');

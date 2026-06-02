@@ -16,6 +16,7 @@
     "qmd"
   ],
   "skills": "./skills/",
+  "hooks": "./codex-hooks/hooks.json",
   "mcpServers": "./.mcp.json",
   "interface": {
     "displayName": "Obsidian Plugin",

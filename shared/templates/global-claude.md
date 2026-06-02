@@ -72,7 +72,3 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - API/Docs: Use context7 MCP for framework documentation.
 - Planning: Use sequential-thinking MCP before writing code.
 - Search/Research: Use tavily MCP for web search and real-time information.
-
-## Lessons & Self-Correction
-
-Read `.vibe/lessons.md` at the start of each session. After ANY user correction, immediately add the pattern to `.vibe/lessons.md`.

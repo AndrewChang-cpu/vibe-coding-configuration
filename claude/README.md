@@ -19,9 +19,13 @@ Sets up Claude Code configuration in your project.
 ## What it generates
 
 - `~/.claude/CLAUDE.md` — global behavioral instructions (written once, never overwritten on re-runs)
-- `.vibe/lessons.md` — self-correction log (project-specific)
 
 Also registers the MCP servers above with the Claude CLI and installs the general-plugin. The QMD MCP runs `qmd mcp`, so it uses the same user-global QMD collections configured in `~/.config/qmd/index.yml`.
+
+After bootstrap, plugin updates are handled by plugin-bundled hooks:
+
+- `general-plugin/hooks/hooks.json` updates `general-plugin`
+- `obsidian-plugin/hooks/hooks.json` updates `obsidian-plugin`
 
 Run `/init` in each project after setup to generate the project-specific `CLAUDE.md`.
 

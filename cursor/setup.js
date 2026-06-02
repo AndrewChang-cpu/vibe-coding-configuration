@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { readTemplate, writeFile, writeFileIfAbsent, exec } = require('../shared/utils');
+const { readTemplate, writeFile, exec } = require('../shared/utils');
 
 function setup(cwd) {
   console.log('[INFO] Configuring Cursor...');
@@ -8,8 +8,6 @@ function setup(cwd) {
   // --- .vibe base ---
   const vibe = path.join(cwd, '.vibe');
   fs.mkdirSync(vibe, { recursive: true });
-
-  writeFileIfAbsent(path.join(vibe, 'lessons.md'), readTemplate('lessons.md'));
 
   // --- .cursor/mcp.json ---
   const isWindows = process.platform === 'win32';

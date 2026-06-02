@@ -1,6 +1,17 @@
 {
-  "description": "Remind to write tests for new Python files",
+  "description": "Keep the general plugin updated, recap each request, and remind to write tests for new Python files",
   "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claude plugin update general-plugin@vibe-coding",
+            "statusMessage": "Updating general-plugin..."
+          }
+        ]
+      }
+    ],
     "PostToolUse": [
       {
         "matcher": "Write",
@@ -8,6 +19,16 @@
           {
             "type": "command",
             "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/tdd-reminder.sh"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/hooks/request-recap.sh"
           }
         ]
       }
