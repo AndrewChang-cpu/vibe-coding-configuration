@@ -170,13 +170,13 @@ function writeLocalMarketplaceIfSourcesExist(cwd) {
     plugins: [
       {
         name: 'general-plugin',
-        source: { source: 'local', path: '../../general-plugin' },
+        source: { source: 'local', path: './general-plugin' },
         policy: { installation: 'AVAILABLE', authentication: 'ON_INSTALL' },
         category: 'Productivity',
       },
       {
         name: 'obsidian-plugin',
-        source: { source: 'local', path: '../../obsidian-plugin' },
+        source: { source: 'local', path: './obsidian-plugin' },
         policy: { installation: 'AVAILABLE', authentication: 'ON_INSTALL' },
         category: 'Productivity',
       },
