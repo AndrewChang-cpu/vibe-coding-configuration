@@ -1,6 +1,8 @@
 # vibe-setup
 
-Bootstrap a consistent AI agent environment in any project. Run once to generate config files for Claude Code, Cursor, and Codex built around your project context.
+Bootstrap a consistent AI agent environment for Claude Code, Codex, and Cursor.
+
+Claude Code and Codex setup are intended to be **global, once-per-machine setup**. They write user-level instructions, agents, MCP configuration, and plugins so the same workflows are available from any repository. Cursor setup is still project-local because Cursor reads project config from `.cursor/`.
 
 ## Usage
 
@@ -57,20 +59,22 @@ Re-running is safe — you'll be prompted before global instruction/config files
 
 ## Workflow
 
-### First-time setup (once per machine)
+### First-time global setup (once per machine)
 ```bash
-npx vibe-setup --claude
+npx vibe-setup@latest --claude --codex
 ```
 - Writes `~/.claude/CLAUDE.md` with behavioral and security instructions
-- Configures MCP servers and installs the skill plugin
+- Writes `~/.codex/AGENTS.md` with the same global behavioral instructions
+- Configures MCP servers and installs the skill plugins
 - Deploys agents to `~/.claude/agents/`
+- Deploys Codex agents to `~/.codex/agents/`
 - Registers the QMD MCP server; QMD reads its collections from your user-global `~/.config/qmd/index.yml`
 
-### Per project
+### Per-project setup
 ```bash
-npx vibe-setup@latest --claude --yes  # update global config + project .vibe/
+npx vibe-setup@latest --cursor --yes
 ```
-Then run `/init` in Claude Code to generate the project-specific `CLAUDE.md`.
+Use per-project setup only for tools that need repository-local config, such as Cursor. For Claude Code, run `/init` in a repository when you want a project-specific `CLAUDE.md` layered on top of the global setup. Codex does not need `vibe-setup` rerun in each project for the global instructions, MCP servers, plugins, or agents.
 
 ## Claude Code Plugin
 
@@ -177,7 +181,7 @@ These are invoked directly by the user when needed, **outside the primary pipeli
 
 ### Agents
 
-Agents are spawned as subagents by skills (automatic) or invoked directly using `subagent_type: <name>` in a prompt. Claude Code uses `general-plugin/agents/*.md`; Codex uses generated `.codex/agents/*.toml` files and plugin-bundled `general-plugin/codex-agents/*.toml`.
+Agents are spawned as subagents by skills (automatic) or invoked directly using `subagent_type: <name>` in a prompt. Claude Code uses `~/.claude/agents/*.md`; Codex uses `~/.codex/agents/*.toml` and plugin-bundled `general-plugin/codex-agents/*.toml`.
 
 | Agent | Spawned automatically by | Invoke directly when |
 |-------|--------------------------|----------------------|
