@@ -8,6 +8,13 @@ allowed-tools:
   - Bash
 ---
 
+<tool_gate>
+Use this skill only in Claude Code with the ralph-wiggum plugin installed.
+
+If the current tool is not Claude Code, stop and say:
+`vibe:work-ralph is Claude Code-only. Use /goal with vibe:work-goal instead.`
+</tool_gate>
+
 <input_validation>
 Check prerequisites:
 ```bash

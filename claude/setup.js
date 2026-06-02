@@ -112,7 +112,7 @@ async function setup(cwd, { yes = false, reconfigure = false } = {}) {
     console.log(`[CREATED] ${statuslineDest}`);
   }
 
-  // Write settings.json for statusLine and remove the legacy cross-plugin updater hook.
+  // Write settings.json for statusLine.
   const settingsPath = path.join(globalClaudeDir, 'settings.json');
   const settings = fs.existsSync(settingsPath)
     ? JSON.parse(fs.readFileSync(settingsPath, 'utf8'))
@@ -120,22 +120,8 @@ async function setup(cwd, { yes = false, reconfigure = false } = {}) {
   if (writeStatusline) {
     settings.statusLine = { type: 'command', command: statuslineDest };
   }
-  const pluginUpdateCommand = '~/.local/bin/claude plugin update general-plugin@vibe-coding 2>/dev/null; ~/.local/bin/claude plugin update obsidian-plugin@vibe-coding 2>/dev/null || true';
-  let removedLegacyHook = false;
-  if (settings.hooks && Array.isArray(settings.hooks.UserPromptSubmit)) {
-    const originalLength = settings.hooks.UserPromptSubmit.length;
-    settings.hooks.UserPromptSubmit = settings.hooks.UserPromptSubmit.filter(
-      h => !(h.hooks && h.hooks.some(hh => hh.command === pluginUpdateCommand))
-    );
-    removedLegacyHook = settings.hooks.UserPromptSubmit.length !== originalLength;
-    if (settings.hooks.UserPromptSubmit.length === 0) delete settings.hooks.UserPromptSubmit;
-    if (Object.keys(settings.hooks).length === 0) delete settings.hooks;
-  }
   fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2) + '\n', 'utf8');
-  console.log(`[UPDATED] ${settingsPath} → ${[
-    writeStatusline ? 'statusLine' : null,
-    removedLegacyHook ? 'removed legacy plugin update hook' : null,
-  ].filter(Boolean).join(' + ') || 'settings checked'}`);
+  console.log(`[UPDATED] ${settingsPath} → ${writeStatusline ? 'statusLine' : 'settings checked'}`);
 
   // --- Agents ---
   const agentsSrc = path.join(__dirname, '..', 'general-plugin', 'agents');

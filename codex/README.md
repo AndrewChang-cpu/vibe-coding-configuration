@@ -72,15 +72,13 @@ API keys are resolved from environment variables, `~/.vibe-setup`, or prompts:
 
 ## Autonomous Work
 
-Keep the existing skill name `vibe:work-ralph` for parity with Claude Code.
-
-In Codex, use `/goal` as the outer loop:
+Use `vibe:work-goal` with `/goal` as the outer loop:
 
 ```text
-/goal Use vibe:work-ralph to repeatedly execute vibe:work until every task in .plan/TASKS.md is done, the integration review passes, doc-updater has run, and every Definition of Done criterion in .plan/PLAN.md passes. If blocked, report the exact blocked task, missing dependency, and failed command. Do not change scope outside the plan.
+/goal Use vibe:work-goal to repeatedly execute vibe:work until every task in .plan/TASKS.md is done, the integration review passes, doc-updater has run, and every Definition of Done criterion in .plan/PLAN.md passes. If blocked, report the exact blocked task, missing dependency, and failed command. Do not change scope outside the plan.
 ```
 
-Claude Code still uses the original Ralph Wiggum stop-hook loop.
+`vibe:work-ralph` remains Claude Code-only for the Ralph Wiggum stop-hook loop.
 
 ## Known Differences
 

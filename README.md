@@ -125,10 +125,11 @@ Run these commands in sequence for any non-trivial feature or bugfix:
 
 **Autonomous variants of step 3:**
 - `/vibe:work-loop` — loops until all tasks complete without manual re-invocation
-- `/vibe:work-ralph` — Claude Code uses the Ralph Wiggum stop-hook loop; Codex keeps the same skill name and uses `/goal` as the outer loop:
+- `/vibe:work-goal` — uses `/goal` as the outer loop in Claude Code or Codex:
   ```
-  /goal Use vibe:work-ralph to repeatedly execute vibe:work until every task in .plan/TASKS.md is done, the integration review passes, doc-updater has run, and every Definition of Done criterion in .plan/PLAN.md passes.
+  /goal Use vibe:work-goal to repeatedly execute vibe:work until every task in .plan/TASKS.md is done, the integration review passes, doc-updater has run, and every Definition of Done criterion in .plan/PLAN.md passes.
   ```
+- `/vibe:work-ralph` — Claude Code-only Ralph Wiggum stop-hook loop
 
 ---
 

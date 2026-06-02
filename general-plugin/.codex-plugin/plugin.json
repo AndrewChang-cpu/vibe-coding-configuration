@@ -17,7 +17,7 @@
     "auditing",
     "adr"
   ],
-  "skills": "./codex-skills/",
+  "skills": "./skills/",
   "agents": "./codex-agents/",
   "hooks": "./codex-hooks/hooks.json",
   "mcpServers": "./.mcp.json",
