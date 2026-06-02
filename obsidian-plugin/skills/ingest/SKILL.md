@@ -28,8 +28,20 @@ Do not rely on an `export` command persisting across tool calls — substitute t
 
 ## Step 1: Conversion
 Use your terminal access to run the appropriate Marker command on the target.
-- If the target is a single file, run: `marker_single <target> --output_dir "$OBSIDIAN_VAULT/01_Raw_Sources/MDs/"`
-- If the target is a directory, run: `marker <target> --output_dir "$OBSIDIAN_VAULT/01_Raw_Sources/MDs/"`
+
+The `--output_dir` must **mirror the PDF's parent directory**, replacing `PDFs` with `MDs` in the path. For example, if the PDF lives at:
+```
+$OBSIDIAN_VAULT/01_Raw_Sources/PDFs/Textbooks/Clean Code/
+```
+then `--output_dir` should be:
+```
+$OBSIDIAN_VAULT/01_Raw_Sources/MDs/Textbooks/Clean Code/
+```
+
+Marker will create a subdirectory named after the PDF file inside that path, giving the correct mirrored structure.
+
+- If the target is a single file, run: `marker_single <target> --output_dir "<mirrored-MDs-parent-dir>"`
+- If the target is a directory, run: `marker <target> --output_dir "<mirrored-MDs-parent-dir>"`
 
 Note: `marker` takes the output path via `--output_dir`, not as a positional argument.
 
@@ -65,7 +77,7 @@ Instead, for each raw MD file produced in Step 1, **spawn a subagent** (using th
 
 **Agent prompt template** (fill in the bracketed values for each batch):
 
-> Read the following raw Markdown file(s): [list of absolute paths]. For each file, write a Study Guide note to [wiki output path] using EXACTLY this template — do not deviate:
+> Read the following raw Markdown file(s): [list of absolute paths]. For each file, write a Study Guide note to [wiki output path] using EXACTLY this template — do not deviate from section names or structure:
 >
 > ```
 > ---
@@ -86,12 +98,26 @@ Instead, for each raw MD file produced in Step 1, **spawn a subagent** (using th
 > {Extract any critical formulas. If none, omit.}
 > ```
 >
+> **CRITICAL — Section names are exact strings required by downstream scripts:**
+> - The overview section MUST be named `## Executive Summary`. Do NOT rename it to `## Overview`, `## Summary`, or anything else. The cross-linking pipeline (`link_related.py`) queries QMD using the text under this exact heading — a different name produces empty cross-links.
+>
+> **CRITICAL — Image links must use the full vault-relative path:**
+> - When the source MD references images (e.g. `_page_33_Picture_4.jpeg`), write them as `![[01_Raw_Sources/MDs/{source-dir-name}/_page_33_Picture_4.jpeg]]` using the full path from the vault root. Do NOT use bare filenames — the same filename can exist in multiple course directories and Obsidian will resolve it to the wrong file.
+>
 > Write each output file directly — do not return the note content in your response.
 
 Launch batches in parallel where possible. Wait for all agents to complete before proceeding to Step 3.
 
 ## Step 3: RAG Update
-Execute `qmd embed` to update the vector database so new files are immediately searchable. Also run `qmd embed -c MDs` to keep the raw-sources-only collection in sync.
+Run `qmd update` first to register new files, then `qmd embed` to generate their vectors. `qmd embed` alone is a no-op for files that aren't yet registered — always run `update` first:
+
+```bash
+cd "$OBSIDIAN_VAULT" && qmd update && qmd embed && qmd embed -c MDs
+```
+
+`qmd embed` covers the main `andrew-obsidian` collection; `qmd embed -c MDs` keeps the raw-sources-only collection in sync.
+
+Verify the new files were picked up by checking that the collection file count increased (visible in `qmd collection list` output).
 
 ## Step 4: Cross-Course Link Injection & Rename
 After embedding, run the link pipeline on the newly created wiki notes:
