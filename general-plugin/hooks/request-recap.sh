@@ -16,6 +16,7 @@ Include:
 - A brief summary of the user-facing decisions or guidance you gave.
 - A file-by-file technical description of changes you made or proposed.
 - Verification performed or explicitly not performed.
+- Steps taken: briefly describe the sequence of actions you performed to reach the result (e.g. "read X → found Y → edited Z"). If any step failed or was abandoned, note what went wrong and what you did instead.
 
 Do not summarize the whole conversation.
 Do not write or suggest persistent lessons.

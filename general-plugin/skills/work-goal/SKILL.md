@@ -39,7 +39,7 @@ Repeat this cycle until complete:
 
 1. Execute `vibe:work` for exactly one complete wave or completion pass.
 2. Let `vibe:work` update `.plan/TASKS.md` status transitions.
-3. After each wave, re-read `.plan/TASKS.md` and `.plan/PLAN.md`.
+3. After each wave, re-read `.plan/TASKS.md` only (PLAN.md does not change between waves — do not re-read it).
 4. Continue if any tasks are still `pending` or `reviewed`.
 5. Stop only when every task is `done`, integration review has passed, doc-updater has run, and every DoD criterion passes.
 

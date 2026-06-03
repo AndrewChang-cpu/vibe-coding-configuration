@@ -21,7 +21,9 @@ If either is missing:
 
 <execution_flow>
 ## Stage 1 — READ
-Read `.plan/TASKS.md` and `.plan/PLAN.md` only. Extract the Definition of Done criteria from PLAN.md. Build a mental model of:
+**HARD CONSTRAINT: The orchestrating agent may read ONLY `.plan/TASKS.md` and `.plan/PLAN.md`. Never read any project source file, handler, test, config, or dependency — not as context gathering, not to resolve ambiguity, not for any reason. Subagents read source files; the orchestrator does not. Violating this constraint is the primary cause of context exhaustion.**
+
+Read `.plan/TASKS.md` and `.plan/PLAN.md`. Extract the Definition of Done criteria from PLAN.md. Build a mental model of:
 - All tasks (ID, status, depends_on, files, what, done-when)
 - Which tasks are `done`
 - Which tasks are `reviewed`

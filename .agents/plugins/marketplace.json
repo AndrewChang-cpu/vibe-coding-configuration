@@ -8,7 +8,7 @@
       "name": "general-plugin",
       "source": {
         "source": "local",
-        "path": "./general-plugin"
+        "path": "../../general-plugin"
       },
       "policy": {
         "installation": "AVAILABLE",
@@ -20,7 +20,7 @@
       "name": "obsidian-plugin",
       "source": {
         "source": "local",
-        "path": "./obsidian-plugin"
+        "path": "../../obsidian-plugin"
       },
       "policy": {
         "installation": "AVAILABLE",
