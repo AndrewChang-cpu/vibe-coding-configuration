@@ -1,6 +1,6 @@
 ---
 name: test-driven-development
-description: Use when implementing any feature or bugfix, before writing implementation code
+description: Use before changing reusable application or library behavior in a real codebase with a test harness. Do not use for content edits, Markdown/link rewrites, metadata cleanup, file moves, generated output, configuration-only changes, or one-off data repair.
 ---
 
 # Test-Driven Development (TDD)
@@ -17,16 +17,22 @@ Write the test first. Watch it fail. Write minimal code to pass.
 
 **Python projects:** Before writing tests, read the `python-testing` skill for this project's pytest fixture conventions, marker setup, coverage configuration, and codebase-specific testing patterns.
 
-**Always:**
-- New features
-- Bug fixes
-- Refactoring
-- Behavior changes
+**Use for software behavior changes:**
+- New application or library features
+- Bug fixes in executable code
+- Refactoring executable code
+- Behavior changes in tested systems
+
+**Do not use for content or maintenance-only changes:**
+- Markdown, documentation, or Obsidian vault edits
+- Link rewrites, frontmatter edits, metadata cleanup, or file moves
+- Bulk text/data repair where a dry-run and resolver scan are the right verification
+- Generated output
+- Configuration-only changes
 
 **Exceptions (ask your human partner):**
 - Throwaway prototypes
-- Generated code
-- Configuration files
+- Projects without a real test harness
 
 Thinking "skip TDD just this once"? Stop. That's rationalization.
 

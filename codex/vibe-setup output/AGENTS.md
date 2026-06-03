@@ -13,6 +13,8 @@ Before implementing:
 - If multiple interpretations exist, present them - don't pick silently.
 - If a simpler approach exists, say so. Push back when warranted.
 - If something is unclear, stop. Name what's confusing. Ask.
+- Do not make file changes unless the user explicitly asks for edits or implementation.
+- Treat questions, debugging discussion, and requests for advice as conversation only. Asking a question is not approval to change files.
 
 ## 2. Simplicity First
 
