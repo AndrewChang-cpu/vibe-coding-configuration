@@ -1,6 +1,6 @@
 {
   "name": "obsidian-plugin",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "description": "Obsidian vault pipeline skills for Codex and Claude Code.",
   "author": {
     "name": "AndrewChang-cpu"

@@ -1,7 +1,7 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { readTemplate, writeFile, execOptional } = require('../shared/utils');
+const { readTemplate, writeFile, exec } = require('../shared/utils');
 const { resolveKeys } = require('../shared/keys');
 
 const CODEX_CONFIG_SECTIONS = [
@@ -249,10 +249,10 @@ async function setup(cwd, { yes = false, reconfigure = false } = {}) {
   writeLocalMarketplaceIfSourcesExist(cwd);
 
   // --- Codex plugin update/install flow ---
-  execOptional('codex plugin marketplace add AndrewChang-cpu/vibe-coding-configuration');
-  execOptional('codex plugin marketplace upgrade vibe-coding');
-  execOptional('codex plugin add general-plugin@vibe-coding');
-  execOptional('codex plugin add obsidian-plugin@vibe-coding');
+  exec('codex plugin marketplace add AndrewChang-cpu/vibe-coding-configuration');
+  exec('codex plugin marketplace upgrade vibe-coding');
+  exec('codex plugin add general-plugin@vibe-coding');
+  exec('codex plugin add obsidian-plugin@vibe-coding');
 
   console.log('[SUCCESS] Codex configured.');
 }
