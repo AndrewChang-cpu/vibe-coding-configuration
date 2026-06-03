@@ -47,6 +47,8 @@ From the ready tasks, select the set to execute in this wave. Use judgment:
 - If uncertain about conflicts, run one task.
 
 ## Stage 4 — DISPATCH IMPLEMENTERS
+**HARD CONSTRAINT:** All code changes, file writes, and reviews must happen inside subagents. The orchestrating agent must never use Edit, Write, or Update tools on project files — not as a fallback, not to "unblock" a stalled task, not for any reason. If subagents are failing, the correct response is always to mark the task blocked and move on.
+
 For each task in the wave, dispatch one implementer subagent in parallel. Each subagent receives a self-contained prompt with:
 
 **Scene setting:**
@@ -70,7 +72,7 @@ STEP 0 — TESTABILITY CHECK: Before writing any tests, check whether the code y
 - Shared mutable state: globals or singletons that tests would share → pass state explicitly
 If these appear in code you control, fix the design first. If they are in existing code you cannot change, raise STATUS: BLOCKED explaining the testability constraint. Do not work around untestable design with deep mocking.
 
-STEP 1 — RED: Write the tests listed in the task's "Tests:" field first — one test at a time. If "Tests:" is absent or "N/A", derive tests from the "Done when" criteria. Structure each test as Arrange / Act / Assert. Run them immediately. They MUST fail. Record the exact failure output. If a test passes immediately, it is testing the wrong thing — fix it. Do not write any implementation code until you have seen a failing test.
+STEP 1 — RED: Write the tests listed in the task's "Tests:" field first — one test at a time. Wrap all test execution commands with a timeout appropriate to the test type (e.g., `timeout 60s pytest ...`, `timeout 120s go test ./...`) — use a shorter value for unit tests and a longer one for tests requiring external infrastructure like Docker or testcontainers. If a test command times out, investigate why: check logs, inspect the process, and attempt to fix the root cause. Only report `STATUS: BLOCKED` if the cause is something you cannot fix or are unable to determine. If "Tests:" is absent or "N/A", derive tests from the "Done when" criteria. Structure each test as Arrange / Act / Assert. Run them immediately. They MUST fail. Record the exact failure output. If a test passes immediately, it is testing the wrong thing — fix it. Do not write any implementation code until you have seen a failing test.
 
 Before writing any implementation, enumerate every way the function can exit: success, error return, exception, loop exhausted without condition met, cleanup on failure. Each exit path requires its own test. If you only have tests for the success path, you have not finished the RED phase.
 
@@ -123,6 +125,8 @@ When an implementer returns, extract and retain only: the STATUS line, the list 
 After all implementers in the wave report back, handle each status:
 
 **NEEDS_CONTEXT:** Provide the missing context and re-dispatch the implementer.
+
+**STALL (agent timed out or failed without returning a STATUS):** Re-dispatch up to 2 more times (3 stalls total). If it stalls a third time, mark the task `blocked` in TASKS.md with reason: "Subagent repeatedly stalled — manual intervention required." Move to the next task. Do not implement the task inline in the orchestrating agent — a stalled subagent is never a justification for making direct code changes.
 
 **BLOCKED:** Skip this task for now. Note it as blocked. Continue with the rest of the wave.
 
