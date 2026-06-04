@@ -27,12 +27,6 @@ function terminal(status) {
   return status === 'CLEAN' || status === 'NEEDS_USER_INPUT' || status === 'BLOCKED'
 }
 
-function reviewPrompt() {
-  return `Use vibe:review-fix-review (general-plugin:review-fix-review).
-
-If the Skill tool is not available or general-plugin:review-fix-review cannot be invoked, return BLOCKED immediately with blocked_reason: "Skill tool unavailable in CC workflow subagent — cannot invoke general-plugin:review-fix-review. The CC review-fix-loop workflow requires skill access."`
-}
-
 function taskifyPrompt() {
   return `Use vibe:review-fix-taskify (general-plugin:review-fix-taskify).
 
@@ -52,14 +46,60 @@ let finalResult = null
 for (let i = 1; i <= maxIterations; i++) {
   log(`Iteration ${i}/${maxIterations} — review`)
 
-  const review = await agent(reviewPrompt(), {
-    label: `review:${i}`,
-    phase: `Review ${i}`,
-    schema: STATUS_SCHEMA,
-  })
+  // Spawn all three adversarial reviewers in parallel at the workflow level.
+  // The previous approach delegated through review-fix-review → vibe:review → Agent(...)
+  // which broke because workflow subagents cannot spawn further sub-agents via the Agent tool.
+  const [codeFindings, pythonFindings, secFindings] = await parallel([
+    () => agent(
+      `Perform a deep code review of the current git diff.
+
+1. Run: git diff HEAD --name-only (fall back to git diff --cached --name-only if empty)
+2. Filter out: package-lock.json, yarn.lock, *.lock, pnpm-lock.yaml, dist/, build/, *.min.js, *.min.css, .plan/
+3. If .plan/PLAN.md exists, read it and note Out of Scope, Assumptions, and documented deferrals — these can be ACKNOWLEDGED rather than reported as blockers
+4. Perform a deep adversarial review. Assume defects exist. Report BLOCKER, WARNING, and INFO findings.`,
+      { agentType: 'code-reviewer', label: `code-review:${i}`, phase: 'Review' }
+    ),
+    () => agent(
+      `Perform a Python-specific review of Python files in the current git diff.
+
+1. Run: git diff HEAD --name-only to find .py files
+2. If no Python files exist in the diff, output "No Python files to review" and stop
+3. If .plan/PLAN.md exists, read it and note documented decisions
+4. Run ruff/mypy/black/bandit automatically where available, then review for CRITICAL, HIGH, and MEDIUM issues`,
+      { agentType: 'python-reviewer', label: `python-review:${i}`, phase: 'Review' }
+    ),
+    () => agent(
+      `Perform a security review of the current git diff.
+
+1. Run: git diff HEAD --name-only (fall back to git diff --cached --name-only if empty)
+2. Filter out: package-lock.json, yarn.lock, *.lock, pnpm-lock.yaml, dist/, build/, *.min.js, *.min.css, .plan/
+3. If .plan/PLAN.md exists, read it and note documented decisions
+4. Review for OWASP Top 10, secrets, injection, auth, XSS, and CVEs. Report findings by severity.`,
+      { agentType: 'security-reviewer', label: `security-review:${i}`, phase: 'Review' }
+    ),
+  ])
+
+  // Pass findings into review-fix-review, skipping Stage 1 (vibe:review) since the
+  // three adversarial agents above have already produced the review output.
+  const review = await agent(
+    `Use vibe:review-fix-review (general-plugin:review-fix-review).
+
+The review (Stage 1) has already been completed externally. Do NOT invoke vibe:review.
+Skip Stage 1 entirely and proceed directly to Stage 2 (Normalize) using the findings below.
+
+CODE REVIEW FINDINGS:
+${codeFindings || 'No findings reported'}
+
+PYTHON REVIEW FINDINGS:
+${pythonFindings || 'No Python files or no findings'}
+
+SECURITY REVIEW FINDINGS:
+${secFindings || 'No findings reported'}`,
+    { label: `normalize:${i}`, phase: 'Review', schema: STATUS_SCHEMA }
+  )
 
   if (!review) {
-    finalResult = { status: 'BLOCKED', summary: 'Review agent returned null', blocked_reason: 'agent returned null' }
+    finalResult = { status: 'BLOCKED', summary: 'Review normalize agent returned null', blocked_reason: 'agent returned null' }
     break
   }
 
@@ -72,7 +112,7 @@ for (let i = 1; i <= maxIterations; i++) {
 
   const taskify = await agent(taskifyPrompt(), {
     label: `taskify:${i}`,
-    phase: `Taskify ${i}`,
+    phase: 'Taskify',
     schema: STATUS_SCHEMA,
   })
 
@@ -92,7 +132,7 @@ for (let i = 1; i <= maxIterations; i++) {
   for (let c = 1; c <= maxWorkCycles; c++) {
     const w = await agent(workPrompt(), {
       label: `work:${i}.${c}`,
-      phase: `Work ${i}`,
+      phase: 'Work',
       schema: STATUS_SCHEMA,
     })
 
@@ -123,7 +163,6 @@ for (let i = 1; i <= maxIterations; i++) {
     break
   }
 
-  // workResult.status === 'CLEAN' — batch done, continue to next review pass
   log(`Iteration ${i} batch complete — running another review pass`)
 }
 
