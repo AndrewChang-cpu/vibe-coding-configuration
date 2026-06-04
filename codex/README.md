@@ -80,10 +80,25 @@ Use `vibe:work-goal` with `/goal` as the outer loop:
 
 `vibe:work-ralph` remains Claude Code-only for the Ralph Wiggum stop-hook loop.
 
+For post-review remediation, use the Codex-backed review-fix loop:
+
+```text
+/vibe:review-fix-loop
+```
+
+This launches a bundled skill-local script from the installed plugin cache. The script runs fresh `codex exec --ephemeral` phases for review, taskify, and work, so each phase gets a clean context while state persists in:
+
+```text
+.plan/review-fix-loop-output/
+```
+
+The loop is intended for bug fixes, security fixes, and code smells within the current wave. It does not use `vibe:plan`. It stops on `CLEAN`, `NEEDS_USER_INPUT`, or `BLOCKED`, and continues only while work remains.
+
 ## Known Differences
 
 - Claude statusline support remains Claude-only.
 - `vibe:work-loop` is not ported as a Codex scheduler; use `/goal` for long-running continuation.
+- `vibe:review-fix-loop` is Codex-backed only and should fail if invoked from Claude Code.
 - Codex plugin hooks are provided through `general-plugin/codex-hooks/hooks.json`.
 
 ## Example Output

@@ -134,6 +134,7 @@ Run these commands in sequence for any non-trivial feature or bugfix:
   /goal Use vibe:work-goal to repeatedly execute vibe:work until every task in .plan/TASKS.md is done, the integration review passes, doc-updater has run, and every Definition of Done criterion in .plan/PLAN.md passes.
   ```
 - `/vibe:work-ralph` — Claude Code-only Ralph Wiggum stop-hook loop
+- `/vibe:review-fix-loop` — Codex-backed headless loop for post-review bug, security, and code-smell remediation. Launches fresh `codex exec --ephemeral` phases for review, taskify, and work. Stops on `CLEAN`, `NEEDS_USER_INPUT`, or `BLOCKED`; artifacts are written to `.plan/review-fix-loop-output/`.
 
 ---
 
@@ -161,6 +162,7 @@ These are invoked directly by the user when needed, **outside the primary pipeli
 | Command | When to use |
 |---------|-------------|
 | `/vibe:debug` | Bug found — investigates cause using the scientific method, proposes a targeted fix |
+| `/vibe:review-fix-loop` | Codex-only automated review-fix loop for defects within the current wave; stops before ambiguous technical decisions |
 | `/vibe:add-tests` | Retrofit tests onto work done outside the pipeline (manual edits, legacy code, external contributor) |
 | `/test-driven-development` | Standalone TDD guidance when not running the full pipeline |
 | `/context-optimization` | Long sessions — KV-cache, observation masking, compaction, partitioning techniques |
