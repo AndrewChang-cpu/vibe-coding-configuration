@@ -137,6 +137,20 @@ async function setup(cwd, { yes = false, reconfigure = false } = {}) {
     }
   }
 
+  // --- Workflows ---
+  const workflowsSrc = path.join(__dirname, '..', '.claude', 'workflows');
+  const workflowsDest = path.join(globalClaudeDir, 'workflows');
+  fs.mkdirSync(workflowsDest, { recursive: true });
+  if (fs.existsSync(workflowsSrc)) {
+    for (const file of fs.readdirSync(workflowsSrc)) {
+      if (file.endsWith('.js')) {
+        const dest = path.join(workflowsDest, file);
+        fs.copyFileSync(path.join(workflowsSrc, file), dest);
+        console.log(`[CREATED] ${dest}`);
+      }
+    }
+  }
+
   console.log('[SUCCESS] Claude Code configured.');
 }
 
