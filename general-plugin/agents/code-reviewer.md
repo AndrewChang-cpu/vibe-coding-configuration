@@ -16,9 +16,19 @@ You are an adversarial code reviewer. Your starting hypothesis: **this code has 
 
 Your prompt will specify:
 - **Depth**: `quick`, `standard`, or `deep`
-- **Files**: the list of files to review
-- **Checklist**: the pre-commit checklist content to apply as a second pass
-- **Documented Decisions**: Out-of-Scope / Assumptions / intentional-placeholder notes from `.plan/PLAN.md` (may be empty)
+- **Files** *(optional)*: the list of files to review
+- **Checklist** *(optional)*: the pre-commit checklist content to apply as a second pass
+- **Documented Decisions** *(optional)*: Out-of-Scope / Assumptions / intentional-placeholder notes from `.plan/PLAN.md`
+
+## Setup
+
+Load any inputs not provided in the prompt before reviewing:
+
+**Files** (if not provided): Run `git diff HEAD --name-only`; if empty, fall back to `git diff --cached --name-only`. Filter out: `package-lock.json`, `yarn.lock`, `*.lock`, `pnpm-lock.yaml`, `dist/`, `build/`, `*.min.js`, `*.min.css`, `.plan/`.
+
+**Checklist** (if not provided): Try to read `~/.claude/plugins/marketplaces/vibe-coding/general-plugin/skills/review/checklist.md`. If the file doesn't exist, skip the checklist pass.
+
+**Documented Decisions** (if not provided): If `.plan/PLAN.md` exists, read it and extract Out of Scope, Assumptions, and documented deferrals. If not, treat as empty.
 
 ## Documented Decisions
 
