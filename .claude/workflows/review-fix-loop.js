@@ -12,6 +12,17 @@ export const meta = {
 const maxIterations = (args && typeof args.maxIterations === 'number') ? args.maxIterations : 10
 const maxWorkCycles = (args && typeof args.maxWorkCycles === 'number') ? args.maxWorkCycles : 10
 
+const PREP_SCHEMA = {
+  type: 'object',
+  required: ['files', 'pythonFiles', 'documentedDecisions', 'checklist'],
+  properties: {
+    files: { type: 'array', items: { type: 'string' } },
+    pythonFiles: { type: 'array', items: { type: 'string' } },
+    documentedDecisions: { type: 'string' },
+    checklist: { type: 'string' },
+  },
+}
+
 const STATUS_SCHEMA = {
   type: 'object',
   required: ['status', 'summary'],
@@ -46,35 +57,60 @@ let finalResult = null
 for (let i = 1; i <= maxIterations; i++) {
   log(`Iteration ${i}/${maxIterations} — review`)
 
+  // Gather file list, checklist, and documented decisions once before spawning reviewers.
+  const prep = await agent(
+    `Gather review prep data and return structured JSON.
+
+1. Run: git diff HEAD --name-only
+   If empty, fall back to: git diff --cached --name-only
+   Filter out: package-lock.json, yarn.lock, files ending in .lock, pnpm-lock.yaml, anything under dist/, build/, files ending in .min.js or .min.css, anything under .plan/
+   Return filtered list as "files". Return the subset ending in .py as "pythonFiles".
+
+2. If .plan/PLAN.md exists, read it and extract Out of Scope, Assumptions, and documented deferrals/placeholders into "documentedDecisions". Otherwise return empty string.
+
+3. Try to read: ~/.claude/plugins/marketplaces/vibe-coding/general-plugin/skills/review/checklist.md
+   If found, return its full content as "checklist". If not found, return empty string.`,
+    { label: `prep:${i}`, phase: 'Review', schema: PREP_SCHEMA }
+  )
+
+  if (!prep) {
+    finalResult = { status: 'BLOCKED', summary: 'Review prep agent returned null', blocked_reason: 'agent returned null' }
+    break
+  }
+
+  const fileList = (prep.files || []).join('\n') || '(none)'
+  const checklist = prep.checklist || '(none — use built-in judgment)'
+  const documentedDecisions = prep.documentedDecisions || 'None'
+
   // Spawn all three adversarial reviewers in parallel at the workflow level.
   // The previous approach delegated through review-fix-review → vibe:review → Agent(...)
   // which broke because workflow subagents cannot spawn further sub-agents via the Agent tool.
   const [codeFindings, pythonFindings, secFindings] = await parallel([
     () => agent(
-      `Perform a deep code review of the current git diff.
+      `Depth: deep
+Files:
+${fileList}
 
-1. Run: git diff HEAD --name-only (fall back to git diff --cached --name-only if empty)
-2. Filter out: package-lock.json, yarn.lock, *.lock, pnpm-lock.yaml, dist/, build/, *.min.js, *.min.css, .plan/
-3. If .plan/PLAN.md exists, read it and note Out of Scope, Assumptions, and documented deferrals — these can be ACKNOWLEDGED rather than reported as blockers
-4. Perform a deep adversarial review. Assume defects exist. Report BLOCKER, WARNING, and INFO findings.`,
+Checklist:
+${checklist}
+
+Documented Decisions:
+${documentedDecisions}`,
       { agentType: 'code-reviewer', label: `code-review:${i}`, phase: 'Review' }
     ),
+    () => (prep.pythonFiles || []).length === 0
+      ? Promise.resolve('No Python files in diff')
+      : agent(
+          `Documented Decisions:
+${documentedDecisions}`,
+          { agentType: 'python-reviewer', label: `python-review:${i}`, phase: 'Review' }
+        ),
     () => agent(
-      `Perform a Python-specific review of Python files in the current git diff.
+      `Files:
+${fileList}
 
-1. Run: git diff HEAD --name-only to find .py files
-2. If no Python files exist in the diff, output "No Python files to review" and stop
-3. If .plan/PLAN.md exists, read it and note documented decisions
-4. Run ruff/mypy/black/bandit automatically where available, then review for CRITICAL, HIGH, and MEDIUM issues`,
-      { agentType: 'python-reviewer', label: `python-review:${i}`, phase: 'Review' }
-    ),
-    () => agent(
-      `Perform a security review of the current git diff.
-
-1. Run: git diff HEAD --name-only (fall back to git diff --cached --name-only if empty)
-2. Filter out: package-lock.json, yarn.lock, *.lock, pnpm-lock.yaml, dist/, build/, *.min.js, *.min.css, .plan/
-3. If .plan/PLAN.md exists, read it and note documented decisions
-4. Review for OWASP Top 10, secrets, injection, auth, XSS, and CVEs. Report findings by severity.`,
+Documented Decisions:
+${documentedDecisions}`,
       { agentType: 'security-reviewer', label: `security-review:${i}`, phase: 'Review' }
     ),
   ])
