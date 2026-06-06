@@ -6,6 +6,7 @@ const path = require('path');
 const { spawnSync } = require('child_process');
 
 const STATUSES = new Set(['CLEAN', 'WORK_REMAINING', 'NEEDS_USER_INPUT', 'BLOCKED']);
+const FINDING_SEVERITIES = new Set(['critical', 'high', 'medium', 'low', 'info']);
 let activePaths = null;
 
 function parseArgs(argv) {
@@ -48,7 +49,7 @@ function printHelp() {
 
 Options:
   --repo <path>              Repository to run in (default: cwd)
-  --max-iterations <n>       Max review/taskify/work iterations (default: 10)
+  --max-iterations <n>       Max taskify/work/re-review fix cycles (default: 10)
   --max-work-cycles <n>      Max work cycles per iteration (default: 10)
   --codex-bin <path>         Codex executable (default: codex)
   --approval-policy <policy> codex exec approval policy (default: never)
@@ -92,11 +93,47 @@ function normalizeResult(raw, phase) {
   if (!STATUSES.has(result.status)) {
     throw new Error(`${phase} returned invalid status: ${result.status}`);
   }
+  if (typeof result.summary !== 'string') {
+    throw new Error(`${phase} returned missing or invalid summary`);
+  }
   return {
     status: result.status,
-    summary: String(result.summary || ''),
+    summary: result.summary,
     question: result.question ? String(result.question) : null,
     blocked_reason: result.blocked_reason ? String(result.blocked_reason) : null,
+  };
+}
+
+function normalizeFindings(raw, phase) {
+  const result = extractJsonObject(raw);
+  if (!Array.isArray(result.findings)) {
+    throw new Error(`${phase} returned missing or invalid findings array`);
+  }
+
+  return {
+    findings: result.findings.map((finding, index) => {
+      if (!finding || typeof finding !== 'object') {
+        throw new Error(`${phase} finding ${index + 1} is not an object`);
+      }
+      if (typeof finding.title !== 'string' || !finding.title) {
+        throw new Error(`${phase} finding ${index + 1} returned missing or invalid title`);
+      }
+      if (!FINDING_SEVERITIES.has(finding.severity)) {
+        throw new Error(`${phase} finding ${index + 1} returned invalid severity: ${finding.severity}`);
+      }
+      if (typeof finding.file !== 'string' || !finding.file) {
+        throw new Error(`${phase} finding ${index + 1} returned missing or invalid file`);
+      }
+      if (typeof finding.description !== 'string' || !finding.description) {
+        throw new Error(`${phase} finding ${index + 1} returned missing or invalid description`);
+      }
+      return {
+        title: finding.title,
+        severity: finding.severity,
+        file: finding.file,
+        description: finding.description,
+      };
+    }),
   };
 }
 
@@ -109,7 +146,7 @@ function updateState(paths, patch) {
   });
 }
 
-function runCodexPhase(args, paths, phase, prompt) {
+function runCodexMessage(args, phase, prompt) {
   const tmpOut = path.join(os.tmpdir(), `review-fix-loop-${process.pid}-${phase}.json`);
   try {
     fs.rmSync(tmpOut, { force: true });
@@ -123,9 +160,6 @@ function runCodexPhase(args, paths, phase, prompt) {
   codexArgs.push(prompt);
 
   console.log(`\n[review-fix-loop] phase: ${phase}`);
-  const startedAt = new Date().toISOString();
-  updateState(paths, { status: 'WORK_REMAINING', last_phase: phase, phase_started_at: startedAt });
-
   const proc = spawnSync(args.codexBin, codexArgs, {
     cwd: args.repo,
     stdio: 'inherit',
@@ -144,6 +178,14 @@ function runCodexPhase(args, paths, phase, prompt) {
 
   const raw = fs.readFileSync(tmpOut, 'utf8');
   fs.rmSync(tmpOut, { force: true });
+  return raw;
+}
+
+function runCodexPhase(args, paths, phase, prompt) {
+  const startedAt = new Date().toISOString();
+  updateState(paths, { status: 'WORK_REMAINING', last_phase: phase, phase_started_at: startedAt });
+
+  const raw = runCodexMessage(args, phase, prompt);
   const result = normalizeResult(raw, phase);
   updateState(paths, {
     status: result.status,
@@ -155,40 +197,80 @@ function runCodexPhase(args, paths, phase, prompt) {
   return result;
 }
 
-function buildReviewPrompt() {
-  return `Use vibe:review-fix-review.
+function runCodexFindingsPhase(args, phase, agentName, prompt) {
+  const raw = runCodexMessage(args, phase, buildFindingsPrompt(agentName, prompt));
+  return normalizeFindings(raw, phase);
+}
+
+const CODE_REVIEW_PROMPT = `Depth: deep
+
+CRITICAL: Your Setup section instructs you to load the checklist from ~/.claude/plugins/marketplaces/vibe-coding/general-plugin/skills/review/checklist.md. If that file cannot be read for any reason, STOP IMMEDIATELY and output only: "CHECKLIST NOT FOUND — aborting review. Cannot proceed without checklist." Do not attempt the review without the checklist.`;
+
+const PYTHON_REVIEW_PROMPT = 'Review Python files in the current git diff. If no .py files exist in the diff, return an empty findings array and stop.';
+
+const SECURITY_REVIEW_PROMPT = 'Review the current git diff for security vulnerabilities.';
+
+function buildFindingsPrompt(agentName, prompt) {
+  return `Use the ${agentName} subagent with this exact prompt:
+${prompt}
 
 Return JSON only:
 {
-  "status": "CLEAN" | "WORK_REMAINING" | "NEEDS_USER_INPUT" | "BLOCKED",
-  "summary": "brief summary",
-  "question": "only when status is NEEDS_USER_INPUT",
-  "blocked_reason": "only when status is BLOCKED"
+  "findings": [
+    {
+      "title": "short title",
+      "severity": "critical" | "high" | "medium" | "low" | "info",
+      "file": "repo/relative/path",
+      "description": "specific finding and expected fix"
+    }
+  ]
 }`;
+}
+
+function buildNormalizeReviewPrompt(findingsJson) {
+  return `Use vibe:review-fix-review (general-plugin:review-fix-review).
+
+The review (Stage 1) has already been completed externally. Do NOT invoke vibe:review.
+Skip Stage 1 entirely and proceed directly to Stage 2 (Normalize) using the findings below.
+
+FINDINGS (JSON):
+${findingsJson}`;
+}
+
+function runCodexReview(args, paths, label) {
+  updateState(paths, { status: 'WORK_REMAINING', last_phase: 'review', phase_started_at: new Date().toISOString() });
+
+  const codeFindings = runCodexFindingsPhase(args, `code-review-${label}`, 'code-reviewer', CODE_REVIEW_PROMPT);
+  const pythonFindings = runCodexFindingsPhase(args, `python-review-${label}`, 'python-reviewer', PYTHON_REVIEW_PROMPT);
+  const secFindings = runCodexFindingsPhase(args, `security-review-${label}`, 'security-reviewer', SECURITY_REVIEW_PROMPT);
+  const allFindings = JSON.stringify({
+    code: codeFindings.findings,
+    python: pythonFindings.findings,
+    security: secFindings.findings,
+  });
+
+  const raw = runCodexMessage(args, `normalize-${label}`, buildNormalizeReviewPrompt(allFindings));
+  const result = normalizeResult(raw, 'review');
+  updateState(paths, {
+    status: result.status,
+    last_phase: 'review',
+    last_summary: result.summary,
+    needs_user_input: result.status === 'NEEDS_USER_INPUT' ? result.question || result.summary : null,
+    blocked_reason: result.status === 'BLOCKED' ? result.blocked_reason || result.summary : null,
+  });
+  return result;
 }
 
 function buildTaskifyPrompt() {
-  return `Use vibe:review-fix-taskify.
+  return `Use vibe:review-fix-taskify (general-plugin:review-fix-taskify).
 
-Return JSON only:
-{
-  "status": "CLEAN" | "WORK_REMAINING" | "NEEDS_USER_INPUT" | "BLOCKED",
-  "summary": "brief summary",
-  "question": "only when status is NEEDS_USER_INPUT",
-  "blocked_reason": "only when status is BLOCKED"
-}`;
+If the Skill tool is not available or general-plugin:review-fix-taskify cannot be invoked, return BLOCKED immediately with blocked_reason: "Skill tool unavailable in CC workflow subagent — cannot invoke general-plugin:review-fix-taskify. The CC review-fix-loop workflow requires skill access."`;
 }
 
 function buildWorkPrompt() {
-  return `Use vibe:review-fix-work.
+  return `Use vibe:review-fix-work (general-plugin:review-fix-work).
 
-Return JSON only:
-{
-  "status": "CLEAN" | "WORK_REMAINING" | "NEEDS_USER_INPUT" | "BLOCKED",
-  "summary": "brief summary",
-  "question": "only when status is NEEDS_USER_INPUT",
-  "blocked_reason": "only when status is BLOCKED"
-}`;
+If the Skill tool is not available or general-plugin:review-fix-work cannot be invoked, return BLOCKED immediately with blocked_reason: "Skill tool unavailable in CC workflow subagent — cannot invoke general-plugin:review-fix-work. The CC review-fix-loop workflow requires skill access."`;
 }
 
 function terminal(status) {
@@ -213,19 +295,22 @@ function main() {
     status: 'WORK_REMAINING',
     iteration: 0,
     max_iterations: args.maxIterations,
+    max_work_cycles: args.maxWorkCycles,
     last_phase: 'init',
     needs_user_input: null,
     blocked_reason: null,
   });
 
-  for (let iteration = 1; iteration <= args.maxIterations; iteration += 1) {
-    updateState(paths, { iteration });
+  console.log('[review-fix-loop] initial review');
+  updateState(paths, { iteration: 1, work_cycle: null, last_phase: 'review' });
+  const initialReview = runCodexReview(args, paths, 'initial');
+  if (terminal(initialReview.status)) {
+    console.log(`[review-fix-loop] stopping after initial review: ${initialReview.status}`);
+    return initialReview.status === 'CLEAN' ? 0 : 2;
+  }
 
-    const review = runCodexPhase(args, paths, 'review', buildReviewPrompt());
-    if (terminal(review.status)) {
-      console.log(`[review-fix-loop] stopping after review: ${review.status}`);
-      return review.status === 'CLEAN' ? 0 : 2;
-    }
+  for (let iteration = 1; iteration <= args.maxIterations; iteration += 1) {
+    updateState(paths, { iteration, work_cycle: null });
 
     const taskify = runCodexPhase(args, paths, 'taskify', buildTaskifyPrompt());
     if (terminal(taskify.status)) {
@@ -235,7 +320,7 @@ function main() {
 
     let work;
     for (let cycle = 1; cycle <= args.maxWorkCycles; cycle += 1) {
-      updateState(paths, { work_cycle: cycle });
+      updateState(paths, { iteration, work_cycle: cycle });
       work = runCodexPhase(args, paths, 'work', buildWorkPrompt());
       if (work.status !== 'WORK_REMAINING') break;
     }
@@ -248,6 +333,8 @@ function main() {
     if (work.status === 'WORK_REMAINING') {
       updateState(paths, {
         status: 'BLOCKED',
+        last_phase: 'work',
+        last_summary: `Work returned WORK_REMAINING after ${args.maxWorkCycles} cycles`,
         blocked_reason: `work still returned WORK_REMAINING after ${args.maxWorkCycles} cycles`,
       });
       console.log('[review-fix-loop] stopping: work cycle limit reached');
@@ -255,10 +342,18 @@ function main() {
     }
 
     console.log('[review-fix-loop] current batch complete; running another review pass');
+    updateState(paths, { iteration: iteration + 1, work_cycle: null, last_phase: 'review' });
+    const review = runCodexReview(args, paths, String(iteration));
+    if (terminal(review.status)) {
+      console.log(`[review-fix-loop] stopping after review: ${review.status}`);
+      return review.status === 'CLEAN' ? 0 : 2;
+    }
   }
 
   updateState(paths, {
     status: 'BLOCKED',
+    last_phase: 'loop',
+    last_summary: `Max iterations (${args.maxIterations}) reached`,
     blocked_reason: `max iterations reached (${args.maxIterations})`,
   });
   console.log(`[review-fix-loop] stopping: max iterations reached (${args.maxIterations})`);

@@ -1,3 +1,6 @@
+import fs from 'node:fs'
+import path from 'node:path'
+
 export const meta = {
   name: 'review-fix-loop',
   description: 'Review → taskify → work → review loop until CLEAN, BLOCKED, or NEEDS_USER_INPUT. Claude Code analog of the Codex review-fix-loop skill.',
@@ -11,6 +14,14 @@ export const meta = {
 // args: { maxIterations?: number, maxWorkCycles?: number }
 const maxIterations = (args && typeof args.maxIterations === 'number') ? args.maxIterations : 10
 const maxWorkCycles = (args && typeof args.maxWorkCycles === 'number') ? args.maxWorkCycles : 10
+
+const outputDir = path.join('.plan', 'review-fix-loop-output')
+const paths = {
+  outputDir,
+  tasks: path.join(outputDir, 'tasks.json'),
+  state: path.join(outputDir, 'state.json'),
+  reviewIterations: path.join(outputDir, 'review-iterations'),
+}
 
 const STATUS_SCHEMA = {
   type: 'object',
@@ -45,6 +56,58 @@ const FINDINGS_SCHEMA = {
 
 function terminal(status) {
   return status === 'CLEAN' || status === 'NEEDS_USER_INPUT' || status === 'BLOCKED'
+}
+
+function readJson(file, fallback = {}) {
+  try {
+    return JSON.parse(fs.readFileSync(file, 'utf8'))
+  } catch {
+    return fallback
+  }
+}
+
+function writeJson(file, value) {
+  fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`, 'utf8')
+}
+
+function updateState(patch) {
+  const current = readJson(paths.state)
+  writeJson(paths.state, {
+    ...current,
+    ...patch,
+    updated_at: new Date().toISOString(),
+  })
+}
+
+function initializeLoopState() {
+  fs.mkdirSync(paths.outputDir, { recursive: true })
+  fs.mkdirSync(paths.reviewIterations, { recursive: true })
+
+  if (!fs.existsSync(paths.tasks)) {
+    writeJson(paths.tasks, { tasks: [] })
+  }
+
+  updateState({
+    status: 'WORK_REMAINING',
+    iteration: 0,
+    max_iterations: maxIterations,
+    max_work_cycles: maxWorkCycles,
+    last_phase: 'init',
+    needs_user_input: null,
+    blocked_reason: null,
+  })
+}
+
+function persistFinal(result, phase) {
+  updateState({
+    status: result.status,
+    last_phase: phase,
+    last_summary: result.summary,
+    needs_user_input: result.status === 'NEEDS_USER_INPUT' ? result.question || result.summary : null,
+    blocked_reason: result.status === 'BLOCKED' ? result.blocked_reason || result.summary : null,
+  })
+
+  return result
 }
 
 function taskifyPrompt() {
@@ -96,10 +159,14 @@ ${allFindings}`,
 
 // ── initial review ───────────────────────────────────────────────────────────
 
+initializeLoopState()
+
 log('Initial review')
+updateState({ status: 'WORK_REMAINING', iteration: 1, last_phase: 'review', work_cycle: null })
 const initialReview = await runReview('initial')
 
 let finalResult = null
+let finalPhase = 'review'
 
 if (!initialReview) {
   finalResult = { status: 'BLOCKED', summary: 'Initial review agent returned null', blocked_reason: 'agent returned null' }
@@ -112,6 +179,7 @@ if (!initialReview) {
 if (!finalResult) {
   for (let i = 1; i <= maxIterations; i++) {
     log(`Fix iteration ${i}/${maxIterations} — taskify`)
+    updateState({ status: 'WORK_REMAINING', iteration: i, last_phase: 'taskify', work_cycle: null })
 
     const taskify = await agent(taskifyPrompt(), {
       label: `taskify:${i}`,
@@ -121,11 +189,13 @@ if (!finalResult) {
 
     if (!taskify) {
       finalResult = { status: 'BLOCKED', summary: 'Taskify agent returned null', blocked_reason: 'agent returned null' }
+      finalPhase = 'taskify'
       break
     }
 
     if (terminal(taskify.status)) {
       finalResult = taskify
+      finalPhase = 'taskify'
       break
     }
 
@@ -133,6 +203,7 @@ if (!finalResult) {
 
     let workResult = null
     for (let c = 1; c <= maxWorkCycles; c++) {
+      updateState({ status: 'WORK_REMAINING', iteration: i, last_phase: 'work', work_cycle: c })
       const w = await agent(workPrompt(), {
         label: `work:${i}.${c}`,
         phase: 'Work',
@@ -141,6 +212,7 @@ if (!finalResult) {
 
       if (!w) {
         workResult = { status: 'BLOCKED', summary: 'Work agent returned null', blocked_reason: 'agent returned null' }
+        finalPhase = 'work'
         break
       }
       workResult = w
@@ -149,11 +221,13 @@ if (!finalResult) {
 
     if (!workResult) {
       finalResult = { status: 'BLOCKED', summary: 'Work phase did not run', blocked_reason: 'internal error' }
+      finalPhase = 'work'
       break
     }
 
     if (workResult.status === 'NEEDS_USER_INPUT' || workResult.status === 'BLOCKED') {
       finalResult = workResult
+      finalPhase = 'work'
       break
     }
 
@@ -163,20 +237,24 @@ if (!finalResult) {
         summary: `Work returned WORK_REMAINING after ${maxWorkCycles} cycles`,
         blocked_reason: `max work cycles (${maxWorkCycles}) reached without completing tasks`,
       }
+      finalPhase = 'work'
       break
     }
 
     log(`Fix iteration ${i}/${maxIterations} — re-review`)
+    updateState({ status: 'WORK_REMAINING', iteration: i + 1, last_phase: 'review', work_cycle: null })
 
     const review = await runReview(i)
 
     if (!review) {
       finalResult = { status: 'BLOCKED', summary: 'Re-review agent returned null', blocked_reason: 'agent returned null' }
+      finalPhase = 'review'
       break
     }
 
     if (terminal(review.status)) {
       finalResult = review
+      finalPhase = 'review'
       break
     }
 
@@ -189,8 +267,9 @@ if (!finalResult) {
       summary: `Max iterations (${maxIterations}) reached`,
       blocked_reason: `max iterations reached`,
     }
+    finalPhase = 'loop'
   }
 }
 
 log(`Final: ${finalResult.status} — ${finalResult.summary}`)
-return finalResult
+return persistFinal(finalResult, finalPhase)
