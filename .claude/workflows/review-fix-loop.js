@@ -23,6 +23,26 @@ const STATUS_SCHEMA = {
   },
 }
 
+const FINDINGS_SCHEMA = {
+  type: 'object',
+  required: ['findings'],
+  properties: {
+    findings: {
+      type: 'array',
+      items: {
+        type: 'object',
+        required: ['title', 'severity', 'file', 'description'],
+        properties: {
+          title: { type: 'string' },
+          severity: { type: 'string', enum: ['critical', 'high', 'medium', 'low', 'info'] },
+          file: { type: 'string' },
+          description: { type: 'string' },
+        },
+      },
+    },
+  },
+}
+
 function terminal(status) {
   return status === 'CLEAN' || status === 'NEEDS_USER_INPUT' || status === 'BLOCKED'
 }
@@ -45,17 +65,22 @@ async function runReview(label) {
       `Depth: deep
 
 CRITICAL: Your Setup section instructs you to load the checklist from ~/.claude/plugins/marketplaces/vibe-coding/general-plugin/skills/review/checklist.md. If that file cannot be read for any reason, STOP IMMEDIATELY and output only: "CHECKLIST NOT FOUND — aborting review. Cannot proceed without checklist." Do not attempt the review without the checklist.`,
-      { agentType: 'code-reviewer', label: `code-review:${label}`, phase: 'Review' }
+      { agentType: 'code-reviewer', label: `code-review:${label}`, phase: 'Review', schema: FINDINGS_SCHEMA }
     ),
     () => agent(
-      `Review Python files in the current git diff. If no .py files exist in the diff, output "No Python files to review" and stop.`,
-      { agentType: 'python-reviewer', label: `python-review:${label}`, phase: 'Review' }
+      `Review Python files in the current git diff. If no .py files exist in the diff, return an empty findings array and stop.`,
+      { agentType: 'python-reviewer', label: `python-review:${label}`, phase: 'Review', schema: FINDINGS_SCHEMA }
     ),
     () => agent(
       `Review the current git diff for security vulnerabilities.`,
-      { agentType: 'security-reviewer', label: `security-review:${label}`, phase: 'Review' }
+      { agentType: 'security-reviewer', label: `security-review:${label}`, phase: 'Review', schema: FINDINGS_SCHEMA }
     ),
   ])
+
+  const codeList = (codeFindings && codeFindings.findings) || []
+  const pythonList = (pythonFindings && pythonFindings.findings) || []
+  const secList = (secFindings && secFindings.findings) || []
+  const allFindings = JSON.stringify({ code: codeList, python: pythonList, security: secList })
 
   return agent(
     `Use vibe:review-fix-review (general-plugin:review-fix-review).
@@ -63,14 +88,8 @@ CRITICAL: Your Setup section instructs you to load the checklist from ~/.claude/
 The review (Stage 1) has already been completed externally. Do NOT invoke vibe:review.
 Skip Stage 1 entirely and proceed directly to Stage 2 (Normalize) using the findings below.
 
-CODE REVIEW FINDINGS:
-${codeFindings || 'No findings reported'}
-
-PYTHON REVIEW FINDINGS:
-${pythonFindings || 'No Python files or no findings'}
-
-SECURITY REVIEW FINDINGS:
-${secFindings || 'No findings reported'}`,
+FINDINGS (JSON):
+${allFindings}`,
     { label: `normalize:${label}`, phase: 'Review', schema: STATUS_SCHEMA }
   )
 }
