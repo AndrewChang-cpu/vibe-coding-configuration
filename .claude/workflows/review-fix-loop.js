@@ -185,6 +185,7 @@ if (!finalResult) {
       label: `taskify:${i}`,
       phase: 'Taskify',
       schema: STATUS_SCHEMA,
+      agentType: 'claude',
     })
 
     if (!taskify) {
@@ -208,6 +209,7 @@ if (!finalResult) {
         label: `work:${i}.${c}`,
         phase: 'Work',
         schema: STATUS_SCHEMA,
+        agentType: 'claude',
       })
 
       if (!w) {
