@@ -1,6 +1,6 @@
 {
   "name": "vibe-setup",
-  "version": "2.6.3",
+  "version": "2.6.4",
   "description": "Bootstrap a consistent AI agent environment for Claude Code, Cursor, and Codex in any project.",
   "bin": {
     "vibe-setup": "bin/vibe-setup.js"
