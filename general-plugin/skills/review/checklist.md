@@ -23,7 +23,14 @@ Use for `/vibe:review` and work-skill task reviewers. REJECT on any blocking ite
 
 ## Advisory
 
-9. **Engineering quality** — Naming unclear, non-idiomatic patterns, unnecessary complexity or over-engineering.
+9. **Engineering quality (Clean Code)** — advisory:
+   - Names reveal intent without needing a comment; name length matches scope.
+   - Functions do one thing at one level of abstraction; ≤3 args (flag arguments split into two named functions).
+   - No duplication (DRY) — extract repeated logic.
+   - One reason to change per class/module (SRP).
+   - Comments explain *why*, never restate *what*; no commented-out code.
+   - Tests are F.I.R.S.T. (Fast, Independent, Repeatable, Self-Validating, Timely) and treated as first-class code.
+   - Non-idiomatic patterns, unnecessary complexity, or over-engineering.
 10. **Spec drift** — Behavior diverges from `.plan/PLAN.md`, `PRD.md`, or the task block in ways not covered by item 8 (structural choices, flow ordering, non-DoD implementation details).
 
 Severity: blocking items must be fixed before approval; advisory items may ship with notes.

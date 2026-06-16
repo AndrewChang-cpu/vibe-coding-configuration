@@ -236,3 +236,7 @@ result = process("  Hello World  ")  # "hello_world"
 - Use `is None` / `is not None`, never `== None`
 - Use `logging` not `print` in non-script code
 - Use `str | None` union syntax (Python 3.10+) not `Optional[str]`
+- Keep functions small and single-purpose — one thing, at one level of abstraction
+- Limit to ≤3 parameters; wrap related args into a dataclass/argument object
+- No flag arguments — split `f(..., flag: bool)` into two named functions
+- Don't return `None` as a sentinel that forces caller null-checks — return an empty collection, a value object, or raise

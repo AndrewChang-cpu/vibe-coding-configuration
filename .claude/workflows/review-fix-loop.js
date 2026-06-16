@@ -3,7 +3,7 @@ import path from 'node:path'
 
 export const meta = {
   name: 'review-fix-loop',
-  description: 'Review → taskify → work → review loop until CLEAN, BLOCKED, or NEEDS_USER_INPUT. Claude Code analog of the Codex review-fix-loop skill.',
+  description: 'Review → taskify → work → review loop until CLEAN, BLOCKED, or NEEDS_USER_INPUT.',
   phases: [
     { title: 'Review' },
     { title: 'Taskify' },

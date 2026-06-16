@@ -1,14 +1,5 @@
 # Claude Code Setup
 
-## MCPs
-- **postgres** — inspect live database schema
-- **github** — read issues, draft PRs
-- **sequential-thinking** — structured planning before coding
-- **puppeteer** — browser automation and localhost rendering
-- **context7** — framework and library documentation lookup
-- **tavily** — web search and real-time information
-- **qmd** — query user-global QMD markdown/RAG collections
-
 ## Plugin
 - **general-plugin** (from this repo) — installs skills: `context-optimization`, `doc-coauthoring`, `test-driven-development`, `systematic-debugging`, `subagent-driven-development`, `filesystem-context`, `executing-plans`, `frontend-design`
 
@@ -18,26 +9,16 @@ Sets up Claude Code configuration in your project.
 
 ## What it generates
 
-- `~/.claude/CLAUDE.md` — global behavioral instructions (written once, never overwritten on re-runs)
+- `~/.claude/CLAUDE.md` — global behavioral instructions (prompts before overwriting on re-runs)
+- `~/.claude/agents/` — agent definitions
+- `~/.claude/workflows/` — workflow scripts
 
-Also registers the MCP servers above with the Claude CLI and installs the general-plugin. The QMD MCP runs `qmd mcp`, so it uses the same user-global QMD collections configured in `~/.config/qmd/index.yml`.
+It also offers to add a `claude` shell alias that launches Claude Code with `--plugin-dir` pointing at `general-plugin`.
 
-After bootstrap, plugin updates are handled by plugin-bundled hooks:
+The general-plugin itself (skills, agents, hooks) is installed separately as a Claude Code plugin.
+
+After bootstrap, plugin updates are handled by a plugin-bundled hook:
 
 - `general-plugin/hooks/hooks.json` updates `general-plugin`
-- `obsidian-plugin/hooks/hooks.json` updates `obsidian-plugin`
 
 Run `/init` in each project after setup to generate the project-specific `CLAUDE.md`.
-
-## MCP API Keys
-
-Set these in a `.env` file in your project root before running:
-```
-GITHUB_PERSONAL_ACCESS_TOKEN=your_token
-CONTEXT7_API_KEY=your_key
-TAVILY_API_KEY=your_key
-```
-
-## Example output
-
-See `vibe-setup output/` for an example of what gets generated.

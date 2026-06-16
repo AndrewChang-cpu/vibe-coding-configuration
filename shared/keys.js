@@ -1,7 +1,6 @@
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-
 const VIBE_SETUP_PATH = path.join(os.homedir(), '.vibe-setup');
 
 function readVibeSetup() {
@@ -24,76 +23,4 @@ function writeVibeSetup(newKeys) {
   console.log(`[INFO] Keys saved to ~/.vibe-setup`);
 }
 
-// keyDefs: [{ name: 'SOME_KEY', hint: 'where to get it' }]
-// Returns an object of resolved key-value pairs (skipped keys are absent).
-async function resolveKeys(keyDefs, { yes = false, reconfigure = false } = {}) {
-  const stored = readVibeSetup();
-
-  if (reconfigure) {
-    const { default: inquirer } = await import('inquirer');
-    console.log('\nReconfiguring API keys. Press Enter to keep existing value.\n');
-    const updated = {};
-    for (const { name, hint } of keyDefs) {
-      const existing = stored[name] || process.env[name];
-      const { value } = await inquirer.prompt([{
-        type: 'password',
-        name: 'value',
-        message: `${name}${hint ? ` (${hint})` : ''}${existing ? ' [Enter to keep]' : ''}:`,
-        mask: '*',
-      }]);
-      updated[name] = value || existing || '';
-    }
-    writeVibeSetup(updated);
-    return updated;
-  }
-
-  const resolved = {};
-  const missing = [];
-  let anyFromFile = false;
-
-  for (const def of keyDefs) {
-    const value = process.env[def.name] || stored[def.name];
-    if (value) {
-      resolved[def.name] = value;
-      if (!process.env[def.name]) anyFromFile = true;
-    } else {
-      missing.push(def);
-    }
-  }
-
-  if (anyFromFile) console.log('[INFO] API keys loaded from ~/.vibe-setup');
-
-  if (missing.length === 0) return resolved;
-
-  const { default: inquirer } = await import('inquirer');
-  console.log('\nSome API keys are missing. Enter them now or press Enter to skip.\n');
-
-  const prompted = {};
-  for (const { name, hint } of missing) {
-    const { value } = await inquirer.prompt([{
-      type: 'password',
-      name: 'value',
-      message: `${name}${hint ? ` (${hint})` : ''}:`,
-      mask: '*',
-    }]);
-    if (value) prompted[name] = value;
-  }
-
-  if (Object.keys(prompted).length > 0) {
-    let save = yes;
-    if (!yes) {
-      const { confirm } = await inquirer.prompt([{
-        type: 'confirm',
-        name: 'confirm',
-        message: 'Save these keys to ~/.vibe-setup for future runs?',
-        default: true,
-      }]);
-      save = confirm;
-    }
-    if (save) writeVibeSetup(prompted);
-  }
-
-  return { ...resolved, ...prompted };
-}
-
-module.exports = { resolveKeys, readVibeSetup, writeVibeSetup };
+module.exports = { readVibeSetup, writeVibeSetup };

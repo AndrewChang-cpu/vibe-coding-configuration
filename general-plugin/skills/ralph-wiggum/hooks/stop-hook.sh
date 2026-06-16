@@ -55,7 +55,7 @@ if [[ $MAX_ITERATIONS -gt 0 ]] && [[ $ITERATION -ge $MAX_ITERATIONS ]]; then
 fi
 
 # Get transcript path from hook input
-TRANSCRIPT_PATH=$(echo "$HOOK_INPUT" | jq -r '.transcript_path')
+TRANSCRIPT_PATH=$(printf '%s' "$HOOK_INPUT" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{process.stdout.write(JSON.parse(s).transcript_path||"")}catch{process.stdout.write("")}})')
 
 if [[ ! -f "$TRANSCRIPT_PATH" ]]; then
   echo "⚠️  Ralph loop: Transcript file not found" >&2
@@ -87,14 +87,9 @@ if [[ -z "$LAST_LINE" ]]; then
 fi
 
 # Parse JSON with error handling
-LAST_OUTPUT=$(echo "$LAST_LINE" | jq -r '
-  .message.content |
-  map(select(.type == "text")) |
-  map(.text) |
-  join("\n")
-' 2>&1)
+LAST_OUTPUT=$(printf '%s' "$LAST_LINE" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{const c=JSON.parse(s).message.content;process.stdout.write(c.filter(x=>x.type==="text").map(x=>x.text).join("\n"))}catch(e){console.error(e.message);process.exit(1)}})' 2>&1)
 
-# Check if jq succeeded
+# Check if parsing succeeded
 if [[ $? -ne 0 ]]; then
   echo "⚠️  Ralph loop: Failed to parse assistant message JSON" >&2
   echo "   Error: $LAST_OUTPUT" >&2
@@ -164,14 +159,7 @@ fi
 
 # Output JSON to block the stop and feed prompt back
 # The "reason" field contains the prompt that will be sent back to Claude
-jq -n \
-  --arg prompt "$PROMPT_TEXT" \
-  --arg msg "$SYSTEM_MSG" \
-  '{
-    "decision": "block",
-    "reason": $prompt,
-    "systemMessage": $msg
-  }'
+PROMPT="$PROMPT_TEXT" MSG="$SYSTEM_MSG" node -e 'process.stdout.write(JSON.stringify({decision:"block",reason:process.env.PROMPT,systemMessage:process.env.MSG}))'
 
 # Exit 0 for successful hook execution
 exit 0

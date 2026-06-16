@@ -1,7 +1,7 @@
 {
   "name": "vibe-setup",
   "version": "2.6.5",
-  "description": "Bootstrap a consistent AI agent environment for Claude Code, Cursor, and Codex in any project.",
+  "description": "Bootstrap a consistent AI agent environment for Claude Code in any project.",
   "bin": {
     "vibe-setup": "bin/vibe-setup.js"
   },
@@ -9,17 +9,11 @@
     ".claude/",
     "bin/",
     "claude/",
-    "cursor/",
-    "codex/",
     "shared/",
-    "general-plugin/",
-    "obsidian-plugin/"
+    "general-plugin/"
   ],
   "scripts": {
     "start": "node bin/vibe-setup.js"
-  },
-  "dependencies": {
-    "inquirer": "^9.0.0"
   },
   "engines": {
     "node": ">=18"
@@ -27,8 +21,6 @@
   "keywords": [
     "ai",
     "claude",
-    "cursor",
-    "codex",
     "mcp",
     "vibe-coding"
   ],

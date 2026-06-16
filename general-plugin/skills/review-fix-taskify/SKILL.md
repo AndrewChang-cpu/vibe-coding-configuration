@@ -1,6 +1,6 @@
 ---
 name: vibe:review-fix-taskify
-description: Converts confirmed review-fix loop ledger tasks into executable .plan/TASKS.md entries for vibe:work. Codex headless wrapper; does not run implementation.
+description: Converts confirmed review-fix loop ledger tasks into executable .plan/TASKS.md entries for vibe:work. Headless wrapper; does not run implementation.
 allowed-tools:
   - Read
   - Write

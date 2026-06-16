@@ -12,29 +12,4 @@ function writeFile(filePath, content, label) {
   console.log(`[CREATED] ${filePath}`);
 }
 
-function writeFileIfAbsent(filePath, content) {
-  if (fs.existsSync(filePath)) return;
-  writeFile(filePath, content);
-}
-
-function exec(cmd) {
-  const { execSync } = require('child_process');
-  try {
-    execSync(cmd, { stdio: 'pipe' });
-  } catch (err) {
-    const msg = err.stderr ? err.stderr.toString().trim() : err.message;
-    throw new Error(`Command failed: ${cmd}\n${msg}`);
-  }
-}
-
-function execOptional(cmd) {
-  const { execSync } = require('child_process');
-  try {
-    execSync(cmd, { stdio: 'pipe' });
-  } catch (err) {
-    const msg = err.stderr ? err.stderr.toString().trim() : err.message;
-    console.warn(`[WARN] ${cmd}\n       ${msg}`);
-  }
-}
-
-module.exports = { readTemplate, writeFile, writeFileIfAbsent, exec, execOptional };
+module.exports = { readTemplate, writeFile };

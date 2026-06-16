@@ -5,7 +5,7 @@ set -euo pipefail
 
 HOOK_INPUT=$(cat)
 
-FILE_PATH=$(echo "$HOOK_INPUT" | jq -r '.tool_input.file_path // ""')
+FILE_PATH=$(printf '%s' "$HOOK_INPUT" | node -e 'let s="";process.stdin.on("data",d=>s+=d).on("end",()=>{try{process.stdout.write(JSON.parse(s).tool_input?.file_path||"")}catch{process.stdout.write("")}})')
 
 # Only trigger for Python source files
 if [[ "$FILE_PATH" != *.py ]]; then

@@ -53,6 +53,9 @@ You are a senior Python code reviewer.
 - Mixing sync/async incorrectly
 - N+1 queries in loops — batch instead
 
+### HIGH — Null Handling
+- Returning `None` as a sentinel that forces caller null-checks — prefer an empty collection, a value object, or raising. Don't pass `None` as an argument by convention.
+
 ### MEDIUM — Best Practices
 - PEP 8 violations (import order, naming, spacing)
 - Missing docstrings on public functions/classes
@@ -60,6 +63,14 @@ You are a senior Python code reviewer.
 - `from module import *`
 - `value == None` — use `value is None`
 - Shadowing builtins (`list`, `dict`, `str`, `id`)
+
+### MEDIUM — Clean Code (Martin)
+- **Unclear names**: a name that needs a comment to explain it — rename instead. Name length should match scope (short names only for tiny scopes).
+- **Function does more than one thing**: mixes abstraction levels, or can be split into named "sections" — extract until each does one thing at one level of abstraction.
+- **Too many arguments**: more than 3 parameters — wrap related args into a dataclass/argument object (anything over 5 is HIGH, see Code Quality).
+- **Flag arguments**: `def render(is_suite: bool)` — split into two named functions.
+- **Redundant comments**: a comment that restates what the code already says — delete it and let the name carry the meaning. Comments should explain *why*, not *what*.
+- **SRP**: a class with more than one reason to change — if you can't describe it in ~25 words without "and/or", split it.
 
 ## Diagnostic Commands
 
@@ -98,4 +109,4 @@ For project-specific Python standards, read the `python-patterns` skill.
 
 ---
 
-Review with the mindset: "Would this pass review at a senior Python shop or production open-source project?"
+Review with the mindset: "Would this pass review at a senior Python shop or production open-source project?" Code is read ~10× more than it is written — optimize for the next reader.
